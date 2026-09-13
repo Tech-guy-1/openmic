@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenMic — Creative Talent Discovery</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+
+:root{
+  --ink:#15132A; --ink-2:#211D3D; --ink-soft:#57517E;
+  --paper:#FBF8F1; --paper-2:#F1ECDD; --line:#E3DDCB; --line-on-ink:#38335C;
+  --gold:#F2B705; --gold-ink:#4A3900; --coral:#FF5B4C; --white:#FFFFFF;
+  --font-display:'Fraunces',serif; --font-body:'IBM Plex Sans',system-ui,sans-serif;
+  --radius-sm:3px; --radius-md:6px; --container:1180px;
+}
+*,*::before,*::after{ box-sizing:border-box; }
+body{ margin:0; font-family:var(--font-body); color:var(--ink); background:var(--paper); line-height:1.55; -webkit-font-smoothing:antialiased; }
+h1,h2,h3,h4{ font-family:var(--font-display); margin:0 0 .4em; line-height:1.08; font-weight:600; letter-spacing:-0.01em; }
+h1{ font-size:clamp(2.2rem,5vw,3.4rem); font-weight:500; }
+h2{ font-size:clamp(1.6rem,3vw,2.2rem); }
+h3{ font-size:1.2rem; }
+p{ margin:0 0 1em; color:var(--ink-soft); max-width:62ch; }
+a{ color:inherit; text-decoration:none; }
+img{ max-width:100%; display:block; }
+button{ font-family:inherit; }
+:focus-visible{ outline:3px solid var(--gold); outline-offset:2px; }
+.container{ max-width:var(--container); margin:0 auto; padding:0 24px; }
+
+.btn{ display:inline-flex; align-items:center; gap:8px; padding:12px 22px; border-radius:var(--radius-sm); font-weight:600; font-size:.95rem; border:1.5px solid transparent; cursor:pointer; transition:transform .15s ease,background .15s ease,border-color .15s ease; }
+.btn:active{ transform:translateY(1px); }
+.btn-primary{ background:var(--coral); color:var(--white); }
+.btn-primary:hover{ background:#e64a3d; }
+.btn-outline{ background:transparent; border-color:var(--ink); color:var(--ink); }
+.btn-outline:hover{ background:var(--ink); color:var(--white); }
+.btn-ghost{ background:transparent; color:var(--ink); border-color:var(--line); }
+.btn-ghost:hover{ border-color:var(--ink); }
+.btn-block{ width:100%; justify-content:center; }
+.btn-sm{ padding:8px 14px; font-size:.85rem; }
+.btn[disabled]{ opacity:.55; cursor:not-allowed; }
+
+.site-header{ background:var(--ink); color:var(--white); position:sticky; top:0; z-index:40; }
+.nav-row{ display:flex; align-items:center; justify-content:space-between; padding:16px 24px; gap:20px; flex-wrap:wrap; }
+.brand{ display:flex; align-items:center; gap:9px; cursor:pointer; }
+.brand-logo{ height:28px; width:auto; max-width:160px; object-fit:contain; }
+.brand-text{ font-family:var(--font-display); font-size:1.25rem; font-weight:600; color:var(--white); }
+.main-nav{ display:flex; gap:24px; flex-wrap:wrap; }
+.main-nav a{ color:#C9C4E8; font-size:.92rem; font-weight:500; padding:6px 2px; border-bottom:2px solid transparent; cursor:pointer; }
+.main-nav a:hover{ color:var(--white); }
+.main-nav a.active{ color:var(--white); border-bottom-color:var(--gold); }
+.nav-actions{ display:flex; align-items:center; gap:12px; }
+.user-chip{ display:flex; align-items:center; gap:8px; background:var(--ink-2); border:1px solid var(--line-on-ink); border-radius:999px; padding:5px 12px 5px 5px; }
+.user-chip .avatar{ width:26px; height:26px; border-radius:50%; background:var(--gold); color:var(--gold-ink); font-weight:700; font-size:.72rem; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+.user-chip .avatar img{ width:100%; height:100%; object-fit:cover; }
+.user-chip span{ font-size:.83rem; color:var(--white); }
+.link-btn{ background:none; border:none; color:#C9C4E8; cursor:pointer; font-size:.85rem; padding:6px 4px; }
+.link-btn:hover{ color:var(--white); }
+
+.hero{ background:var(--ink); color:var(--white); padding:56px 0 76px; position:relative; overflow:hidden; }
+.hero::after{ content:""; position:absolute; right:-120px; top:-120px; width:420px; height:420px; background:radial-gradient(circle,rgba(242,183,5,.18),transparent 70%); }
+.hero-grid{ display:grid; grid-template-columns:1.2fr .9fr; gap:48px; align-items:center; position:relative; }
+.eyebrow{ color:var(--gold); font-weight:600; font-size:.9rem; margin-bottom:12px; }
+.hero h1{ color:var(--white); }
+.hero .lead{ color:#D9D5F0; font-size:1.05rem; max-width:48ch; }
+.hero-actions{ display:flex; gap:14px; margin-top:24px; flex-wrap:wrap; }
+.hero-panel{ background:var(--ink-2); border:1px solid var(--line-on-ink); border-radius:var(--radius-md); padding:6px 24px; }
+.stat-row{ display:flex; justify-content:space-between; align-items:baseline; padding:18px 0; border-bottom:1px dashed var(--line-on-ink); gap:16px; }
+.stat-row:last-child{ border-bottom:none; }
+.stat-num{ font-family:var(--font-display); font-size:1.4rem; color:var(--gold); font-weight:600; white-space:nowrap; }
+.stat-label{ color:#C9C4E8; font-size:.9rem; text-align:right; }
+@media (max-width:860px){ .hero-grid{ grid-template-columns:1fr; } .main-nav{ display:none; } }
+
+section{ padding:56px 0; }
+section.alt{ background:var(--paper-2); }
+.section-head{ display:flex; justify-content:space-between; align-items:flex-end; gap:24px; margin-bottom:30px; flex-wrap:wrap; }
+.tag{ display:inline-block; font-size:.82rem; font-weight:600; color:var(--ink); background:var(--white); border:1px solid var(--line); border-radius:var(--radius-sm); padding:6px 12px; cursor:pointer; }
+a.tag:hover, button.tag:hover{ border-color:var(--ink); }
+
+.sequence{ display:grid; grid-template-columns:repeat(5,1fr); gap:18px; }
+.step{ border-top:2px solid var(--ink); padding-top:14px; }
+.step .num{ font-family:var(--font-display); font-size:1.25rem; color:var(--coral); display:block; margin-bottom:6px; }
+.step p{ font-size:.9rem; margin:0; }
+@media (max-width:960px){ .sequence{ grid-template-columns:repeat(2,1fr);} }
+@media (max-width:560px){ .sequence{ grid-template-columns:1fr;} }
+
+.grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:20px; }
+@media (max-width:1040px){ .grid{ grid-template-columns:repeat(3,1fr);} }
+@media (max-width:760px){ .grid{ grid-template-columns:repeat(2,1fr);} }
+@media (max-width:480px){ .grid{ grid-template-columns:1fr;} }
+
+.stub{ background:var(--white); border:1px solid var(--line); border-radius:var(--radius-md); overflow:hidden; display:flex; flex-direction:column; }
+.stub-media{ aspect-ratio:4/3; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:2rem; color:var(--white); font-weight:600; position:relative; }
+.stub-cat{ position:absolute; top:9px; left:9px; background:rgba(21,19,42,.82); color:var(--gold); font-size:.7rem; font-weight:600; padding:4px 8px; border-radius:var(--radius-sm); }
+.stub-body{ padding:14px 14px 10px; border-top:1px dashed var(--line); position:relative; flex:1; display:flex; flex-direction:column; }
+.stub-name{ font-weight:600; font-size:.98rem; margin-bottom:2px; }
+.stub-uni{ font-size:.8rem; color:var(--ink-soft); margin-bottom:10px; }
+.stub-foot{ display:flex; align-items:center; justify-content:space-between; margin-top:auto; padding-top:10px; border-top:1px dashed var(--line); }
+.vote-count{ font-size:.83rem; font-weight:600; }
+.vote-count .n{ color:var(--coral); }
+
+.content-list{ display:flex; flex-direction:column; gap:6px; margin:6px 0 4px; }
+.content-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; background:var(--paper-2); border-radius:var(--radius-sm); padding:7px 10px; }
+.content-title{ font-size:.83rem; font-weight:500; }
+.content-actions{ display:flex; align-items:center; gap:8px; flex-shrink:0; }
+.content-actions .vote-count{ font-size:.78rem; }
+.vote-btn-sm{ display:inline-flex; align-items:center; gap:4px; padding:4px 9px; border-radius:var(--radius-sm); border:1.5px solid var(--ink); background:var(--ink); color:var(--white); font-weight:600; font-size:.72rem; cursor:pointer; }
+.vote-btn-sm:hover{ background:var(--coral); border-color:var(--coral); }
+
+.profile-tags{ display:flex; flex-wrap:wrap; gap:8px; }
+.two-col{ display:grid; grid-template-columns:1fr 1fr; gap:48px; }
+@media (max-width:820px){ .two-col{ grid-template-columns:1fr;} }
+.muted{ color:var(--ink-soft); }
+
+.site-footer{ background:var(--ink); color:#C9C4E8; padding:48px 0 22px; }
+.footer-grid{ display:grid; grid-template-columns:1.4fr 1fr 1fr 1fr; gap:36px; margin-bottom:34px; }
+.footer-logo{ height:32px; width:auto; max-width:180px; object-fit:contain; margin-bottom:10px; }
+.site-footer h4{ color:var(--white); font-size:.88rem; font-weight:700; margin-bottom:12px; }
+.site-footer a, .site-footer button.flink{ display:block; color:#C9C4E8; font-size:.88rem; padding:5px 0; background:none; border:none; text-align:left; cursor:pointer; }
+.site-footer a:hover, .site-footer button.flink:hover{ color:var(--white); }
+.footer-bottom{ border-top:1px solid var(--line-on-ink); padding-top:18px; font-size:.83rem; color:#8E87B8; }
+@media (max-width:760px){ .footer-grid{ grid-template-columns:1fr 1fr;} }
+
+.discover-toolbar{ display:flex; gap:14px; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; background:var(--white); border:1px solid var(--line); border-radius:var(--radius-md); padding:16px 20px; margin-bottom:28px; }
+.discover-toolbar .filters{ display:flex; gap:12px; flex-wrap:wrap; }
+.field{ display:flex; flex-direction:column; gap:4px; }
+.field label{ font-size:.74rem; font-weight:600; color:var(--ink-soft); }
+select, input[type="text"], input[type="email"], input[type="password"], input[type="search"], input[type="tel"]{
+  font-family:var(--font-body); font-size:.9rem; padding:9px 11px; border:1.5px solid var(--line);
+  border-radius:var(--radius-sm); background:var(--white); color:var(--ink); min-width:170px;
+}
+select:focus, input:focus{ border-color:var(--ink); }
+.result-count{ font-size:.86rem; color:var(--ink-soft); }
+.pagination{ display:flex; justify-content:center; align-items:center; gap:16px; margin-top:36px; }
+.page-indicator{ font-size:.88rem; color:var(--ink-soft); }
+.empty-state{ text-align:center; padding:50px 20px; color:var(--ink-soft); }
+
+.auth-shell{ min-height:60vh; display:flex; align-items:center; justify-content:center; padding:50px 20px; }
+.auth-card{ width:100%; max-width:420px; background:var(--white); border:1px solid var(--line); border-radius:var(--radius-md); padding:34px 30px; }
+.auth-card h1{ font-size:1.6rem; margin-bottom:6px; }
+.auth-card .sub{ margin-bottom:22px; font-size:.9rem; }
+.form-row{ margin-bottom:15px; display:flex; flex-direction:column; gap:6px; }
+.form-row label{ font-size:.83rem; font-weight:600; }
+.form-row input, .form-row select{ width:100%; }
+.form-error{ background:#FBE9E7; color:#B23A2E; border:1px solid #F1B7AF; border-radius:var(--radius-sm); padding:10px 12px; font-size:.83rem; margin-bottom:15px; }
+.form-success{ background:#E8F3EC; color:#1E6B3C; border:1px solid #BFE3CC; border-radius:var(--radius-sm); padding:10px 12px; font-size:.83rem; margin-bottom:15px; }
+.form-note{ background:var(--paper-2); border-radius:var(--radius-sm); padding:10px 12px; font-size:.8rem; color:var(--ink-soft); margin-top:16px; }
+.divider{ display:flex; align-items:center; gap:12px; margin:18px 0; color:var(--ink-soft); font-size:.8rem; }
+.divider::before,.divider::after{ content:""; flex:1; height:1px; background:var(--line); }
+.google-btn{ display:flex; align-items:center; justify-content:center; gap:10px; width:100%; padding:10px 16px; border:1.5px solid var(--line); border-radius:var(--radius-sm); background:var(--white); font-weight:600; font-size:.9rem; cursor:pointer; }
+.google-btn:hover{ border-color:var(--ink); }
+.auth-switch{ text-align:center; margin-top:18px; font-size:.86rem; color:var(--ink-soft); }
+.auth-switch button{ background:none; border:none; color:var(--coral); font-weight:600; cursor:pointer; font-size:.86rem; padding:0; }
+.role-toggle{ display:flex; gap:8px; margin-bottom:18px; background:var(--paper-2); border-radius:var(--radius-sm); padding:4px; }
+.role-toggle button{ flex:1; padding:9px; border:none; border-radius:var(--radius-sm); background:transparent; font-weight:600; font-size:.85rem; cursor:pointer; color:var(--ink-soft); }
+.role-toggle button.active{ background:var(--white); color:var(--ink); box-shadow:0 1px 3px rgba(0,0,0,.08); }
+
+.lb-table{ width:100%; border-collapse:collapse; background:var(--white); border:1px solid var(--line); border-radius:var(--radius-md); overflow:hidden; }
+.lb-table th, .lb-table td{ text-align:left; padding:13px 16px; border-bottom:1px solid var(--line); font-size:.9rem; }
+.lb-table th{ background:var(--paper-2); font-weight:700; font-size:.78rem; color:var(--ink-soft); }
+.lb-table tr:last-child td{ border-bottom:none; }
+.lb-rank{ font-family:var(--font-display); font-weight:600; color:var(--coral); }
+
+.opp-list{ display:flex; flex-direction:column; gap:14px; }
+.opp-card{ background:var(--white); border:1px solid var(--line); border-radius:var(--radius-md); padding:20px; display:flex; justify-content:space-between; gap:18px; flex-wrap:wrap; }
+.opp-meta{ font-size:.83rem; color:var(--ink-soft); }
+
+.upload-card{ background:var(--white); border:1px solid var(--line); border-radius:var(--radius-md); padding:32px; max-width:600px; }
+.dropzone{ border:1.5px dashed var(--line); border-radius:var(--radius-md); padding:36px 18px; text-align:center; color:var(--ink-soft); margin-bottom:18px; }
+
+.page-header{ background:var(--ink); color:var(--white); padding:44px 0; }
+.page-header p{ color:#D9D5F0; }
+.view{ display:none; }
+.view.active{ display:block; }
+.demo-banner{ background:var(--gold); color:var(--gold-ink); font-size:.8rem; text-align:center; padding:7px 12px; }
+.inline-panel{ background:var(--white); border:1px solid var(--line); border-radius:var(--radius-md); padding:24px; margin-bottom:24px; }
+.spinner-text{ padding:40px 20px; text-align:center; color:var(--ink-soft); }
+
+.modal-overlay{ position:fixed; inset:0; background:rgba(21,19,42,.65); z-index:100; display:none; align-items:center; justify-content:center; padding:20px; }
+.modal-card{ background:var(--white); border-radius:var(--radius-md); padding:28px 26px; width:100%; max-width:420px; max-height:88vh; overflow-y:auto; }
+</style>
+</head>
+<body>
+
+<div class="demo-banner" id="config-banner" style="display:none;">Supabase isn't configured yet — edit assets/supabase-client.js with your project URL and anon key.</div>
+
+<header class="site-header">
+  <div class="container nav-row">
+    <div class="brand" onclick="navigate('home')">
+      <img class="brand-logo" src="assets/logo.png" alt="Brand logo" onerror="this.style.display='none'">
+    </div>
+    <nav class="main-nav">
+      <a data-view="home" onclick="navigate('home')">Home</a>
+      <a data-view="discover" onclick="navigate('discover')">Discover</a>
+      <a data-view="competitions" onclick="navigate('competitions')">Competitions</a>
+      <a data-view="leaderboard" onclick="navigate('leaderboard')">Leaderboard</a>
+      <a data-view="opportunities" onclick="navigate('opportunities')">Opportunities</a>
+    </nav>
+    <div class="nav-actions" id="auth-actions"></div>
+  </div>
+</header>
+
+<!-- ===================== HOME ===================== -->
+<div class="view active" id="view-home">
+  <section class="hero">
+    <div class="container hero-grid">
+      <div>
+        <div class="eyebrow">Creative talent discovery, open to everyone</div>
+        <h1>The stage is everywhere. Talent should be too.</h1>
+        <p class="lead">OpenMic is where university students showcase performance and creative work, get discovered by their community, and get connected to real opportunities.</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" onclick="navigate('upload')">Showcase your talent</a>
+          <a class="btn btn-outline" onclick="navigate('discover')">Discover talent</a>
+        </div>
+      </div>
+      <div class="hero-panel">
+        <div class="stat-row"><span class="stat-num">12</span><span class="stat-label">Creative categories</span></div>
+        <div class="stat-row"><span class="stat-num">All</span><span class="stat-label">Universities in Malawi, public and private</span></div>
+        <div class="stat-row"><span class="stat-num">Weekly</span><span class="stat-label">Competitions</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="container">
+      <div class="section-head"><div><h2>How it works</h2><p>A creator's path from a first upload to a paid opportunity, in five steps.</p></div></div>
+      <div class="sequence">
+        <div class="step"><span class="num">01</span><h4>Discover</h4><p>Upload a performance and the community finds it.</p></div>
+        <div class="step"><span class="num">02</span><h4>Compete</h4><p>Enter weekly and nationwide competitions.</p></div>
+        <div class="step"><span class="num">03</span><h4>Grow</h4><p>Get feedback and build a verified profile.</p></div>
+        <div class="step"><span class="num">04</span><h4>Get discovered</h4><p>Organizers and brands search the directory.</p></div>
+        <div class="step"><span class="num">05</span><h4>Get opportunities</h4><p>Accept bookings and paid creative work.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="alt">
+    <div class="container">
+      <div class="section-head">
+        <div><h2>Trending this week</h2><p>Vote for a specific piece — each person can vote once per piece, no account needed.</p></div>
+        <a class="tag" onclick="navigate('discover')">View all creators →</a>
+      </div>
+      <div class="grid" id="trending-grid"><div class="spinner-text">Loading…</div></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="container two-col">
+      <div>
+        <h2>Built around real categories</h2>
+        <p class="muted">OpenMic is not limited to music. Any recognized form of creative talent has a place on the platform.</p>
+        <div class="profile-tags" style="margin-top:16px;" id="home-category-tags"></div>
+      </div>
+      <div>
+        <h2>For organizers and brands</h2>
+        <p class="muted">Search a structured directory of verified creative talent instead of relying on word of mouth. Post a role, review profiles, and request a booking directly.</p>
+        <a class="btn btn-outline" onclick="navigate('opportunities')">Post an opportunity</a>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ===================== DISCOVER ===================== -->
+<div class="view" id="view-discover">
+  <div class="page-header"><div class="container"><h1>Discover talent</h1><p>Browse creators across every category, from every university. Vote on individual pieces.</p></div></div>
+  <section>
+    <div class="container">
+      <div class="discover-toolbar">
+        <div class="filters">
+          <div class="field">
+            <label for="filter-category">Category</label>
+            <select id="filter-category" onchange="onDiscoverFilterChange()">
+              <option value="all">All categories</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="filter-sort">Sort by</label>
+            <select id="filter-sort" onchange="onDiscoverFilterChange()">
+              <option value="votes">Most votes</option>
+              <option value="newest">Newest</option>
+              <option value="name">Name (A–Z)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="filter-search">Search</label>
+            <input type="search" id="filter-search" placeholder="Search by name" oninput="onDiscoverFilterChange()">
+          </div>
+        </div>
+        <div class="result-count" id="discover-count"></div>
+      </div>
+      <div class="grid" id="discover-grid"><div class="spinner-text">Loading…</div></div>
+      <div class="pagination" id="discover-pagination"></div>
+    </div>
+  </section>
+</div>
+
+<!-- ===================== COMPETITIONS ===================== -->
+<div class="view" id="view-competitions">
+  <div class="page-header"><div class="container"><h1>Competitions</h1><p>Weekly category rounds and nationwide showcases.</p></div></div>
+  <section>
+    <div class="container">
+      <div class="grid" id="competitions-grid"><div class="spinner-text">Loading…</div></div>
+    </div>
+  </section>
+</div>
+
+<!-- ===================== LEADERBOARD ===================== -->
+<div class="view" id="view-leaderboard">
+  <div class="page-header"><div class="container"><h1>Leaderboard</h1><p>Ranked by total votes across each creator's content.</p></div></div>
+  <section>
+    <div class="container">
+      <table class="lb-table">
+        <thead><tr><th>Rank</th><th>Creator</th><th>University</th><th>Category</th><th>Pieces</th><th>Votes</th></tr></thead>
+        <tbody id="leaderboard-body"><tr><td colspan="6" class="spinner-text">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<!-- ===================== OPPORTUNITIES ===================== -->
+<div class="view" id="view-opportunities">
+  <div class="page-header"><div class="container"><h1>Opportunities</h1><p>Roles and bookings posted by organizers and brands.</p></div></div>
+  <section>
+    <div class="container">
+      <div class="section-head">
+        <div></div>
+        <a class="btn btn-outline" onclick="togglePostOpportunityForm()">Post an opportunity</a>
+      </div>
+      <div class="inline-panel" id="opportunity-form-panel" style="display:none;"></div>
+      <div class="opp-list" id="opportunities-list"><div class="spinner-text">Loading…</div></div>
+    </div>
+  </section>
+</div>
+
+<!-- ===================== UPLOAD ===================== -->
+<div class="view" id="view-upload">
+  <div class="page-header"><div class="container"><h1>Showcase your talent</h1><p>Upload a performance so the community can discover it.</p></div></div>
+  <section>
+    <div class="container" id="upload-container"></div>
+  </section>
+</div>
+
+<!-- ===================== LOGIN ===================== -->
+<div class="view" id="view-login">
+  <div class="auth-shell">
+    <div class="auth-card">
+      <h1>Log in</h1>
+      <p class="sub">Upload, manage your profile, and post opportunities.</p>
+      <div id="login-error"></div>
+      <button class="google-btn" onclick="startGoogleAuth()">
+        <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.9c1.7-1.57 2.7-3.88 2.7-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.9-2.26c-.81.54-1.84.86-3.06.86-2.35 0-4.34-1.59-5.05-3.72H.96v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.95 10.7A5.4 5.4 0 0 1 3.67 9c0-.59.1-1.16.28-1.7V4.97H.96A9 9 0 0 0 0 9c0 1.45.35 2.83.96 4.03l2.99-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .96 4.97l2.99 2.33C4.66 5.17 6.65 3.58 9 3.58z"/></svg>
+        Continue with Google
+      </button>
+      <div class="divider">or</div>
+      <form onsubmit="return handleLogin(event)">
+        <div class="form-row"><label for="login-email">Email</label><input type="email" id="login-email" required></div>
+        <div class="form-row"><label for="login-password">Password</label><input type="password" id="login-password" required></div>
+        <button class="btn btn-primary btn-block" type="submit">Log in</button>
+      </form>
+      <div class="auth-switch">No account? <button onclick="navigate('signup')">Sign up</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== SIGNUP ===================== -->
+<div class="view" id="view-signup">
+  <div class="auth-shell">
+    <div class="auth-card">
+      <h1>Create your account</h1>
+      <p class="sub">Join as a creator, or as a brand/organization.</p>
+      <div class="role-toggle">
+        <button type="button" id="su-toggle-creator" class="active" onclick="setSignupRole('creator')">I'm a creator</button>
+        <button type="button" id="su-toggle-brand" onclick="setSignupRole('brand')">I'm a brand</button>
+      </div>
+      <div id="signup-error"></div>
+      <button class="google-btn" onclick="startGoogleAuth()">
+        <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.9c1.7-1.57 2.7-3.88 2.7-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.9-2.26c-.81.54-1.84.86-3.06.86-2.35 0-4.34-1.59-5.05-3.72H.96v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.95 10.7A5.4 5.4 0 0 1 3.67 9c0-.59.1-1.16.28-1.7V4.97H.96A9 9 0 0 0 0 9c0 1.45.35 2.83.96 4.03l2.99-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .96 4.97l2.99 2.33C4.66 5.17 6.65 3.58 9 3.58z"/></svg>
+        Continue with Google
+      </button>
+      <div class="form-note" style="margin-top:10px;margin-bottom:0;">Signing up with Google? You'll be asked for the details below right after — Google doesn't share them.</div>
+      <div class="divider">or</div>
+      <form onsubmit="return handleSignup(event)">
+        <div class="form-row"><label for="signup-name">Full name</label><input type="text" id="signup-name" required></div>
+        <div class="form-row"><label for="signup-email">Email</label><input type="email" id="signup-email" required></div>
+        <div class="form-row"><label for="signup-password">Password</label><input type="password" id="signup-password" required minlength="6"></div>
+
+        <div id="signup-creator-fields">
+          <div class="form-row"><label for="signup-phone">Phone number</label><input type="tel" id="signup-phone" placeholder="e.g. 0991234567"></div>
+          <div class="form-row"><label for="signup-university">University</label>
+            <select id="signup-university"><option value="">Select university</option></select>
+          </div>
+          <div class="form-row"><label for="signup-city">City</label><input type="text" id="signup-city" placeholder="e.g. Blantyre"></div>
+          <div class="form-row"><label for="signup-year">Year of study</label>
+            <select id="signup-year"><option value="">Select year</option></select>
+          </div>
+        </div>
+
+        <div id="signup-brand-fields" style="display:none;">
+          <div class="form-row"><label for="signup-brand-name">Brand name</label><input type="text" id="signup-brand-name" placeholder="Shown on your public profile"></div>
+          <div class="form-row"><label for="signup-brand-phone">Phone number</label><input type="tel" id="signup-brand-phone" placeholder="e.g. 0991234567"></div>
+          <div class="form-row"><label for="signup-business-email">Business email <span class="muted" style="font-weight:400;">(optional — defaults to your login email)</span></label><input type="email" id="signup-business-email"></div>
+          <div class="form-row"><label for="signup-industry">Industry</label>
+            <select id="signup-industry"><option value="">Select industry</option></select>
+          </div>
+          <div class="form-row"><label for="signup-brand-city">City</label><input type="text" id="signup-brand-city" placeholder="e.g. Blantyre"></div>
+        </div>
+
+        <button class="btn btn-primary btn-block" type="submit">Create account</button>
+      </form>
+      <div class="auth-switch">Already have an account? <button onclick="navigate('login')">Log in</button></div>
+    </div>
+  </div>
+</div>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <img class="footer-logo" src="assets/logo.png" alt="Brand logo" onerror="this.style.display='none'">
+        <p style="color:#C7D5EA;font-size:.9rem;max-width:34ch;">Talent discovery and development infrastructure for university students in Malawi.</p>
+      </div>
+      <div>
+        <h4>Platform</h4>
+        <button class="flink" onclick="navigate('discover')">Discover talent</button>
+        <button class="flink" onclick="navigate('competitions')">Competitions</button>
+        <button class="flink" onclick="navigate('leaderboard')">Leaderboard</button>
+        <button class="flink" onclick="navigate('opportunities')">Opportunities</button>
+      </div>
+      <div>
+        <h4>Creators</h4>
+        <button class="flink" onclick="navigate('upload')">Showcase talent</button>
+        <button class="flink" onclick="navigate('login')">Creator login</button>
+      </div>
+      <div>
+        <h4>Organization</h4>
+        <button class="flink" onclick="navigate('opportunities')">Post an opportunity</button>
+        <button class="flink" onclick="window.location.href='admin.html'">Admin portal</button>
+      </div>
+    </div>
+    <div class="footer-bottom"><span>&copy; 2026. All rights reserved.</span></div>
+  </div>
+</footer>
+
+<!-- ===================== VOTE MODAL (guest voting, no login) ===================== -->
+<div class="modal-overlay" id="vote-modal-overlay">
+  <div class="modal-card">
+    <h3>Cast your vote</h3>
+    <p class="muted" id="vote-modal-context">One vote per person, per piece — we check your name, phone and email so it can't be cast twice.</p>
+    <div id="vote-modal-error"></div>
+    <div class="form-row"><label for="vote-name">Your name</label><input type="text" id="vote-name"></div>
+    <div class="form-row"><label for="vote-phone">Phone number (Malawi)</label><input type="tel" id="vote-phone" placeholder="e.g. 0991234567"></div>
+    <div class="form-row"><label for="vote-email">Email <span class="muted" style="font-weight:400;">(optional)</span></label><input type="email" id="vote-email"></div>
+    <div style="display:flex; gap:10px;">
+      <button class="btn btn-primary" onclick="confirmVote()">Confirm vote</button>
+      <button class="btn btn-ghost" onclick="closeVoteModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== COMPLETE PROFILE MODAL (post Google sign-in) ===================== -->
+<div class="modal-overlay" id="complete-profile-overlay">
+  <div class="modal-card">
+    <h3>Finish setting up your account</h3>
+    <p class="muted">A couple of details before you continue.</p>
+    <div id="complete-profile-error"></div>
+    <div class="role-toggle">
+      <button type="button" id="cp-toggle-creator" class="active" onclick="setCompleteProfileRole('creator')">I'm a creator</button>
+      <button type="button" id="cp-toggle-brand" onclick="setCompleteProfileRole('brand')">I'm a brand</button>
+    </div>
+    <div id="cp-creator-fields">
+      <div class="form-row"><label>Phone number</label><input type="tel" id="cp-phone" placeholder="e.g. 0991234567"></div>
+      <div class="form-row"><label>University</label><select id="cp-university"><option value="">Select university</option></select></div>
+      <div class="form-row"><label>City</label><input type="text" id="cp-city" placeholder="e.g. Blantyre"></div>
+      <div class="form-row"><label>Year of study</label><select id="cp-year"><option value="">Select year</option></select></div>
+    </div>
+    <div id="cp-brand-fields" style="display:none;">
+      <div class="form-row"><label>Brand name</label><input type="text" id="cp-brand-name" placeholder="Shown on your public profile"></div>
+      <div class="form-row"><label>Phone number</label><input type="tel" id="cp-brand-phone" placeholder="e.g. 0991234567"></div>
+      <div class="form-row"><label>Business email <span class="muted" style="font-weight:400;">(optional)</span></label><input type="email" id="cp-business-email"></div>
+      <div class="form-row"><label>Industry</label><select id="cp-industry"><option value="">Select industry</option></select></div>
+      <div class="form-row"><label>City</label><input type="text" id="cp-brand-city" placeholder="e.g. Blantyre"></div>
+    </div>
+    <button class="btn btn-primary btn-block" onclick="submitCompleteProfile()">Save and continue</button>
+    <div class="auth-switch"><button onclick="logout()">Log out instead</button></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/supabase-client.js"></script>
+<script>
+/* ============================================================
+   Static UI data — labels only, not sensitive.
+   ============================================================ */
+const CATEGORIES = ["Singing","Poetry & Spoken Word","Comedy","Dance","Acting","Instrumentalists","Visual Art","Photography","Filmmaking","Writing","Fashion","DJs & Producers"];
+const CATEGORY_COLORS = {"Singing":"#FF5B4C","Poetry & Spoken Word":"#1E7F72","Comedy":"#F2B705","Dance":"#7A4FE0","Acting":"#C4592B","Instrumentalists":"#2E6BB0","Visual Art":"#B0357E","Photography":"#3E8E4F","Filmmaking":"#5A4632","Writing":"#8A6D00","Fashion":"#C23B6A","DJs & Producers":"#4B4768"};
+const UNIVERSITIES = ["University of Malawi","Malawi University of Science and Technology","Mzuzu University","Lilongwe University of Agriculture and Natural Resources","Catholic University of Malawi","Malawi Assemblies of God University","University of Livingstonia","DMI-St. Eugene University","Skyway University","African Bible College","Blantyre International University","Malawi Adventist University"];
+const YEAR_OPTIONS = ["1st year","2nd year","3rd year","4th year","5th year","Postgraduate","Alumni"];
+const INDUSTRIES = ["Events & Entertainment","Media & Advertising","Telecom","Retail & FMCG","Banking & Finance","NGO / Development","Education","Hospitality & Tourism","Fashion & Beauty","Other"];
+
+if(SUPABASE_URL.includes("YOUR-PROJECT-REF")){
+  document.getElementById("config-banner").style.display = "block";
+}
+function fillSelect(id, options){
+  const sel = document.getElementById(id);
+  options.forEach(o=>{ const opt=document.createElement("option"); opt.value=o; opt.textContent=o; sel.appendChild(opt); });
+}
+fillSelect("signup-university", UNIVERSITIES);
+fillSelect("signup-year", YEAR_OPTIONS);
+fillSelect("signup-industry", INDUSTRIES);
+fillSelect("cp-university", UNIVERSITIES);
+fillSelect("cp-year", YEAR_OPTIONS);
+fillSelect("cp-industry", INDUSTRIES);
+
+/* ============================================================
+   Session state
+   ============================================================ */
+let currentUser = null;   // {profileId, authId, name, email, role, isCreator, avatarUrl, brandName, profileComplete}
+let discoverState = { category:"all", sort:"votes", search:"", page:1 };
+const PAGE_SIZE = 12;
+
+function initials(name){ return (name||"?").split(" ").map(p=>p[0]).slice(0,2).join("").toUpperCase(); }
+
+/* ---------------- Malawian phone helper ---------------- */
+function normalizePhoneMW(raw){
+  const digits = (raw||"").replace(/[\s\-()]/g,"");
+  if(/^\+265\d{9}$/.test(digits)) return digits;
+  if(/^265\d{9}$/.test(digits)) return "+"+digits;
+  if(/^0\d{9}$/.test(digits)) return "+265"+digits.slice(1);
+  return null;
+}
+
+/* ---------------- Auth ---------------- */
+async function loadCurrentUser(){
+  const { data: { session } } = await sb.auth.getSession();
+  if(!session){ currentUser = null; return; }
+
+  let { data: profile } = await sb.from('profiles').select('*').eq('auth_user_id', session.user.id).maybeSingle();
+  if(!profile){
+    await new Promise(r=>setTimeout(r,700));
+    ({ data: profile } = await sb.from('profiles').select('*').eq('auth_user_id', session.user.id).maybeSingle());
+  }
+  if(!profile){ currentUser = null; return; }
+
+  if(profile.is_blocked){
+    alert("Your account has been blocked by an administrator.");
+    await sb.auth.signOut();
+    currentUser = null;
+    return;
+  }
+
+  currentUser = {
+    profileId: profile.id, authId: profile.auth_user_id, name: profile.full_name,
+    email: profile.email, role: profile.role, isCreator: profile.is_creator,
+    avatarUrl: profile.avatar_url, brandName: profile.brand_name,
+    profileComplete: profile.profile_complete
+  };
+}
+
+sb.auth.onAuthStateChange(async (_event, _session)=>{
+  await loadCurrentUser();
+  renderAuthActions();
+  maybeShowCompleteProfile();
+  refreshActiveView();
+});
+
+function renderAuthActions(){
+  const el = document.getElementById("auth-actions");
+  if(currentUser){
+    const avatar = currentUser.avatarUrl ? `<img src="${currentUser.avatarUrl}" alt="">` : initials(currentUser.name);
+    el.innerHTML = `
+      <div class="user-chip">
+        <span class="avatar">${avatar}</span>
+        <span>${(currentUser.name||"").split(" ")[0]}</span>
+      </div>
+      <button class="link-btn" onclick="logout()">Log out</button>
+    `;
+  } else {
+    el.innerHTML = `
+      <button class="btn btn-ghost btn-sm" onclick="navigate('login')" style="color:#fff;border-color:var(--line-on-ink);">Log in</button>
+      <button class="btn btn-gold btn-sm" style="background:var(--gold);color:var(--gold-ink);" onclick="navigate('signup')">Sign up</button>
+    `;
+  }
+}
+function clearError(id){ document.getElementById(id).innerHTML=""; }
+function showError(id,msg){ document.getElementById(id).innerHTML = `<div class="form-error">${msg}</div>`; }
+function showSuccess(id,msg){ document.getElementById(id).innerHTML = `<div class="form-success">${msg}</div>`; }
+
+/* ---------------- Signup role toggle ---------------- */
+let signupRole = "creator";
+function setSignupRole(role){
+  signupRole = role;
+  document.getElementById("su-toggle-creator").classList.toggle("active", role==="creator");
+  document.getElementById("su-toggle-brand").classList.toggle("active", role==="brand");
+  document.getElementById("signup-creator-fields").style.display = role==="creator" ? "block" : "none";
+  document.getElementById("signup-brand-fields").style.display = role==="brand" ? "block" : "none";
+}
+
+async function handleSignup(e){
+  e.preventDefault();
+  clearError("signup-error");
+  const name = document.getElementById("signup-name").value.trim();
+  const email = document.getElementById("signup-email").value.trim().toLowerCase();
+  const password = document.getElementById("signup-password").value;
+
+  const meta = { full_name: name, account_type: signupRole };
+
+  if(signupRole === "creator"){
+    const phone = normalizePhoneMW(document.getElementById("signup-phone").value.trim());
+    const university = document.getElementById("signup-university").value;
+    const city = document.getElementById("signup-city").value.trim();
+    const year = document.getElementById("signup-year").value;
+    if(!phone){ showError("signup-error","Enter a valid Malawian phone number, e.g. 0991234567."); return false; }
+    if(!university){ showError("signup-error","Select your university."); return false; }
+    if(!city){ showError("signup-error","Enter your city."); return false; }
+    if(!year){ showError("signup-error","Select your year of study."); return false; }
+    Object.assign(meta, { phone, university, city, year_of_study: year });
+  } else {
+    const phone = normalizePhoneMW(document.getElementById("signup-brand-phone").value.trim());
+    const brandName = document.getElementById("signup-brand-name").value.trim();
+    const businessEmail = document.getElementById("signup-business-email").value.trim().toLowerCase();
+    const industry = document.getElementById("signup-industry").value;
+    const city = document.getElementById("signup-brand-city").value.trim();
+    if(!brandName){ showError("signup-error","Enter your brand name."); return false; }
+    if(!phone){ showError("signup-error","Enter a valid Malawian phone number, e.g. 0991234567."); return false; }
+    if(!industry){ showError("signup-error","Select an industry."); return false; }
+    Object.assign(meta, { phone, brand_name: brandName, business_email: businessEmail || email, industry, city });
+  }
+
+  const { data, error } = await sb.auth.signUp({ email, password, options: { data: meta, emailRedirectTo: window.location.href } });
+  if(error){ showError("signup-error", error.message); return false; }
+  if(data.session){ navigate("home"); }
+  else { showSuccess("signup-error","Account created. Check your email to confirm it, then log in."); }
+  return false;
+}
+async function handleLogin(e){
+  e.preventDefault();
+  clearError("login-error");
+  const email = document.getElementById("login-email").value.trim().toLowerCase();
+  const password = document.getElementById("login-password").value;
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  if(error){ showError("login-error", error.message); return false; }
+  navigate("home");
+  return false;
+}
+async function startGoogleAuth(){
+  await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin + window.location.pathname } });
+}
+async function logout(){
+  document.getElementById("complete-profile-overlay").style.display = "none";
+  await sb.auth.signOut();
+  navigate("home");
+}
+
+/* ---------------- Complete-profile gate (mainly for Google sign-ins) ---------------- */
+let cpRole = "creator";
+function setCompleteProfileRole(role){
+  cpRole = role;
+  document.getElementById("cp-toggle-creator").classList.toggle("active", role==="creator");
+  document.getElementById("cp-toggle-brand").classList.toggle("active", role==="brand");
+  document.getElementById("cp-creator-fields").style.display = role==="creator" ? "block" : "none";
+  document.getElementById("cp-brand-fields").style.display = role==="brand" ? "block" : "none";
+}
+function maybeShowCompleteProfile(){
+  const overlay = document.getElementById("complete-profile-overlay");
+  if(currentUser && !currentUser.profileComplete){
+    setCompleteProfileRole("creator");
+    document.getElementById("complete-profile-error").innerHTML = "";
+    overlay.style.display = "flex";
+  } else {
+    overlay.style.display = "none";
+  }
+}
+async function submitCompleteProfile(){
+  const errId = "complete-profile-error";
+  clearError(errId);
+  const updates = { profile_complete: true };
+
+  if(cpRole === "creator"){
+    const phone = normalizePhoneMW(document.getElementById("cp-phone").value.trim());
+    const university = document.getElementById("cp-university").value;
+    const city = document.getElementById("cp-city").value.trim();
+    const year = document.getElementById("cp-year").value;
+    if(!phone){ showError(errId,"Enter a valid Malawian phone number, e.g. 0991234567."); return; }
+    if(!university){ showError(errId,"Select your university."); return; }
+    if(!city){ showError(errId,"Enter your city."); return; }
+    if(!year){ showError(errId,"Select your year of study."); return; }
+    Object.assign(updates, { phone, university, city, year_of_study: year, role: 'user' });
+  } else {
+    const phone = normalizePhoneMW(document.getElementById("cp-brand-phone").value.trim());
+    const brandName = document.getElementById("cp-brand-name").value.trim();
+    const businessEmail = document.getElementById("cp-business-email").value.trim().toLowerCase();
+    const industry = document.getElementById("cp-industry").value;
+    const city = document.getElementById("cp-brand-city").value.trim();
+    if(!brandName){ showError(errId,"Enter your brand name."); return; }
+    if(!phone){ showError(errId,"Enter a valid Malawian phone number, e.g. 0991234567."); return; }
+    if(!industry){ showError(errId,"Select an industry."); return; }
+    Object.assign(updates, { phone, brand_name: brandName, business_email: businessEmail || currentUser.email, industry, city, role: 'organizer' });
+  }
+
+  const { error } = await sb.from('profiles').update(updates).eq('id', currentUser.profileId);
+  if(error){ showError(errId, error.message); return; }
+  await loadCurrentUser();
+  document.getElementById("complete-profile-overlay").style.display = "none";
+  renderAuthActions();
+  refreshActiveView();
+}
+
+/* ---------------- Navigation ---------------- */
+function navigate(viewName){
+  document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
+  const target = document.getElementById("view-"+viewName);
+  if(target) target.classList.add("active");
+  document.querySelectorAll(".main-nav a").forEach(a=>{
+    a.classList.toggle("active", a.dataset.view === viewName);
+  });
+  window.scrollTo({top:0,behavior:"instant"});
+  renderForView(viewName);
+}
+function refreshActiveView(){
+  const activeEl = document.querySelector(".view.active");
+  if(activeEl) renderForView(activeEl.id.replace("view-",""));
+}
+function renderForView(viewName){
+  if(viewName==="discover") renderDiscover();
+  if(viewName==="home") renderHome();
+  if(viewName==="competitions") renderCompetitions();
+  if(viewName==="leaderboard") renderLeaderboard();
+  if(viewName==="opportunities") renderOpportunities();
+  if(viewName==="upload") renderUpload();
+}
+
+/* ---------------- Data access ---------------- */
+async function fetchPostFeed(){
+  const { data, error } = await sb.from('public_post_feed').select('*').order('posted_at',{ascending:false});
+  if(error) console.error(error);
+  return data || [];
+}
+function groupByCreator(posts){
+  const map = new Map();
+  posts.forEach(p=>{
+    if(!map.has(p.profile_id)){
+      map.set(p.profile_id, { profile_id:p.profile_id, full_name:p.full_name, university:p.university, city:p.city, bio:p.bio, avatar_url:p.avatar_url, posts:[], totalVotes:0, created_at:p.posted_at });
+    }
+    const c = map.get(p.profile_id);
+    c.posts.push(p);
+    c.totalVotes += p.votes;
+    if(new Date(p.posted_at) > new Date(c.created_at)) c.created_at = p.posted_at;
+  });
+  return [...map.values()];
+}
+async function fetchOpenOpportunities(){
+  const { data, error } = await sb.from('opportunities').select('*').eq('status','open').order('created_at',{ascending:false});
+  if(error) console.error(error);
+  return data || [];
+}
+
+/* ---------------- Cards ---------------- */
+function stubCard(creator){
+  const firstCat = creator.posts[0]?.category;
+  const color = CATEGORY_COLORS[firstCat] || "#57517E";
+  const postsHtml = creator.posts.map(p=>`
+    <div class="content-row">
+      <span class="content-title">${p.title}</span>
+      <span class="content-actions">
+        <span class="vote-count"><span class="n">${p.votes}</span></span>
+        <button class="vote-btn-sm" onclick="openVoteModal('${p.post_id}','${p.title.replace(/'/g,"\\'")}')">▲ Vote</button>
+      </span>
+    </div>
+  `).join("");
+  return `<div class="stub">
+    <div class="stub-media" style="background:${color}"><span class="stub-cat">${firstCat||"—"}</span>${initials(creator.full_name)}</div>
+    <div class="stub-body">
+      <div class="stub-name">${creator.full_name}</div>
+      <div class="stub-uni">${creator.university||""}${creator.city? ' · '+creator.city:''}</div>
+      <p style="font-size:.85rem;">${creator.bio||""}</p>
+      <div class="content-list">${postsHtml}</div>
+      <div class="stub-foot"><span class="vote-count">Total <span class="n">${creator.totalVotes}</span> votes</span></div>
+    </div>
+  </div>`;
+}
+
+/* ---------------- Home ---------------- */
+async function renderHome(){
+  document.getElementById("home-category-tags").innerHTML = CATEGORIES.map(cat=>
+    `<span class="tag" onclick="goToCategory('${cat.replace(/'/g,"\\'")}')">${cat}</span>`).join("");
+  const posts = await fetchPostFeed();
+  const creators = groupByCreator(posts).sort((a,b)=>b.totalVotes-a.totalVotes).slice(0,12);
+  document.getElementById("trending-grid").innerHTML = creators.length
+    ? creators.map(stubCard).join("")
+    : `<div class="empty-state">No creators yet — be the first to showcase your talent.</div>`;
+}
+function goToCategory(cat){
+  discoverState.category = cat;
+  discoverState.page = 1;
+  navigate("discover");
+}
+
+/* ---------------- Discover ---------------- */
+function populateCategoryFilter(){
+  const sel = document.getElementById("filter-category");
+  if(sel.options.length <= 1){
+    CATEGORIES.forEach(cat=>{ const opt=document.createElement("option"); opt.value=cat; opt.textContent=cat; sel.appendChild(opt); });
+  }
+  sel.value = discoverState.category;
+  document.getElementById("filter-sort").value = discoverState.sort;
+  document.getElementById("filter-search").value = discoverState.search;
+}
+async function renderDiscover(){
+  populateCategoryFilter();
+  const posts = await fetchPostFeed();
+  let creators = groupByCreator(posts).filter(c=>{
+    const matchCat = discoverState.category==="all" || c.posts.some(p=>p.category===discoverState.category);
+    const matchSearch = (c.full_name||"").toLowerCase().includes(discoverState.search.toLowerCase());
+    return matchCat && matchSearch;
+  });
+  if(discoverState.category!=="all"){
+    creators = creators.map(c=>({...c, posts:c.posts.filter(p=>p.category===discoverState.category)}));
+  }
+  if(discoverState.sort==="votes") creators.sort((a,b)=>b.totalVotes-a.totalVotes);
+  else if(discoverState.sort==="newest") creators.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+  else if(discoverState.sort==="name") creators.sort((a,b)=>a.full_name.localeCompare(b.full_name));
+
+  const totalPages = Math.max(1, Math.ceil(creators.length / PAGE_SIZE));
+  if(discoverState.page > totalPages) discoverState.page = totalPages;
+  const start = (discoverState.page-1)*PAGE_SIZE;
+  const pageItems = creators.slice(start, start+PAGE_SIZE);
+
+  document.getElementById("discover-count").textContent = `${creators.length} creator${creators.length!==1?'s':''} found`;
+  document.getElementById("discover-grid").innerHTML = pageItems.length
+    ? pageItems.map(stubCard).join("")
+    : `<div class="empty-state">No creators match these filters.</div>`;
+
+  document.getElementById("discover-pagination").innerHTML = creators.length ? `
+    <button class="btn btn-ghost btn-sm" onclick="changeDiscoverPage(-1)" ${discoverState.page<=1?'disabled':''}>← Previous</button>
+    <span class="page-indicator">Page ${discoverState.page} of ${totalPages}</span>
+    <button class="btn btn-ghost btn-sm" onclick="changeDiscoverPage(1)" ${discoverState.page>=totalPages?'disabled':''}>Next →</button>
+  ` : "";
+}
+function changeDiscoverPage(delta){
+  discoverState.page += delta;
+  renderDiscover();
+  document.getElementById("view-discover").scrollIntoView({behavior:"smooth"});
+}
+
+/* ---------------- Competitions ---------------- */
+async function renderCompetitions(){
+  const posts = await fetchPostFeed();
+  const rounds = CATEGORIES.map((cat,i)=>{
+    const entrants = new Set(posts.filter(p=>p.category===cat).map(p=>p.profile_id)).size;
+    return {cat, entrants, closes: ["Mon","Wed","Fri"][i%3]+" this week"};
+  });
+  document.getElementById("competitions-grid").innerHTML = rounds.map(r=>`
+    <div class="stub">
+      <div class="stub-media" style="background:${CATEGORY_COLORS[r.cat]}"><span class="stub-cat">Weekly round</span>${r.cat.split(" ")[0]}</div>
+      <div class="stub-body">
+        <div class="stub-name">${r.cat} — weekly round</div>
+        <div class="stub-uni">${r.entrants} entrants · closes ${r.closes}</div>
+        <p style="font-size:.85rem;">Top 3 voted pieces advance to the nationwide monthly showcase.</p>
+        <div class="stub-foot"><a class="btn btn-ghost btn-sm" onclick="goToCategory('${r.cat.replace(/'/g,"\\'")}')">View entries</a></div>
+      </div>
+    </div>
+  `).join("");
+}
+
+/* ---------------- Leaderboard ---------------- */
+async function renderLeaderboard(){
+  const posts = await fetchPostFeed();
+  const ranked = groupByCreator(posts).sort((a,b)=>b.totalVotes-a.totalVotes);
+  document.getElementById("leaderboard-body").innerHTML = ranked.length ? ranked.map((c,i)=>`
+    <tr>
+      <td class="lb-rank">#${i+1}</td>
+      <td>${c.full_name}</td>
+      <td>${c.university||""}</td>
+      <td>${c.posts[0]?.category||""}</td>
+      <td>${c.posts.length}</td>
+      <td>${c.totalVotes}</td>
+    </tr>
+  `).join("") : `<tr><td colspan="6" class="empty-state">No creators yet.</td></tr>`;
+}
+
+/* ---------------- Opportunities ---------------- */
+async function renderOpportunities(){
+  const opps = await fetchOpenOpportunities();
+  document.getElementById("opportunities-list").innerHTML = opps.length ? opps.map(o=>`
+    <div class="opp-card">
+      <div>
+        <h3>${o.title}</h3>
+        <div class="opp-meta">${o.org_name} · ${o.category||""} · ${o.location||""} · ${new Date(o.created_at).toLocaleDateString()}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="tag">${o.pay||"Paid"}</span>
+        <button class="btn btn-outline btn-sm" onclick="applyToOpportunity('${o.id}','${o.title.replace(/'/g,"\\'")}')">Apply</button>
+      </div>
+    </div>
+  `).join("") : `<div class="empty-state">No open opportunities right now.</div>`;
+}
+async function applyToOpportunity(oppId, title){
+  if(!currentUser){ navigate("login"); return; }
+  const { error } = await sb.from('applications').insert({ opportunity_id: oppId, applicant_id: currentUser.profileId });
+  if(error){
+    if(error.code === '23505') alert(`You already applied to "${title}".`);
+    else alert("Couldn't submit your application: " + error.message);
+    return;
+  }
+  alert(`Application sent for "${title}". The organizer will contact you at ${currentUser.email}.`);
+}
+function togglePostOpportunityForm(){
+  if(!currentUser){ navigate("login"); return; }
+  const panel = document.getElementById("opportunity-form-panel");
+  if(panel.style.display === "block"){ panel.style.display = "none"; return; }
+  panel.style.display = "block";
+  panel.innerHTML = `
+    <h3>Post an opportunity</h3>
+    <div id="opp-form-error"></div>
+    <form onsubmit="return submitOpportunity(event)">
+      <div class="form-row"><label>Title</label><input type="text" id="opp-title" required></div>
+      <div class="form-row"><label>Organization name</label><input type="text" id="opp-org" value="${currentUser.brandName||''}" required></div>
+      <div class="form-row"><label>Category</label>
+        <select id="opp-category">${CATEGORIES.map(c=>`<option>${c}</option>`).join("")}</select>
+      </div>
+      <div class="form-row"><label>Location</label><input type="text" id="opp-location" placeholder="e.g. Blantyre, or Remote" required></div>
+      <div class="form-row"><label>Pay</label>
+        <select id="opp-pay"><option>Paid</option><option>Unpaid</option><option>Stipend</option></select>
+      </div>
+      <button class="btn btn-primary" type="submit">Post opportunity</button>
+    </form>
+  `;
+}
+async function submitOpportunity(e){
+  e.preventDefault();
+  const payload = {
+    title: document.getElementById("opp-title").value.trim(),
+    org_name: document.getElementById("opp-org").value.trim(),
+    category: document.getElementById("opp-category").value,
+    location: document.getElementById("opp-location").value.trim(),
+    pay: document.getElementById("opp-pay").value,
+    posted_by: currentUser.profileId
+  };
+  const { error } = await sb.from('opportunities').insert(payload);
+  if(error){ document.getElementById("opp-form-error").innerHTML = `<div class="form-error">${error.message}</div>`; return false; }
+  document.getElementById("opportunity-form-panel").style.display = "none";
+  renderOpportunities();
+  return false;
+}
+
+/* ---------------- Upload ---------------- */
+function renderUpload(){
+  const el = document.getElementById("upload-container");
+  if(!currentUser){
+    el.innerHTML = `<div class="upload-card">
+      <h3>Log in to upload</h3>
+      <p>You need a creator account to showcase your talent.</p>
+      <a class="btn btn-primary" onclick="navigate('login')">Log in</a>
+    </div>`;
+    return;
+  }
+  el.innerHTML = `<div class="upload-card">
+    <div id="upload-error"></div>
+    <div class="dropzone">Drag a video or image here, or click to select a file<br><small>(file hosting isn't wired up in this build — titles are saved, media upload is a next step)</small></div>
+    <div class="form-row"><label>Title</label><input type="text" id="upload-title" placeholder="e.g. Live at open mic night"></div>
+    <div class="form-row"><label>Category</label>
+      <select id="upload-category" style="width:100%;">${CATEGORIES.map(c=>`<option>${c}</option>`).join("")}</select>
+    </div>
+    <button class="btn btn-primary btn-block" onclick="submitUpload()">Publish</button>
+  </div>`;
+}
+async function submitUpload(){
+  const title = document.getElementById("upload-title").value.trim();
+  const category = document.getElementById("upload-category").value;
+  if(!title){ document.getElementById("upload-error").innerHTML = `<div class="form-error">Give your post a title.</div>`; return; }
+
+  const { error: postErr } = await sb.from('posts').insert({ profile_id: currentUser.profileId, title, category, status: 'pending' });
+  if(postErr){ document.getElementById("upload-error").innerHTML = `<div class="form-error">${postErr.message}</div>`; return; }
+
+  await sb.from('profiles').update({ is_creator: true, category }).eq('id', currentUser.profileId);
+  currentUser.isCreator = true;
+  document.getElementById("upload-container").innerHTML = `<div class="upload-card">
+    <h3>Submitted</h3>
+    <p>Your post is queued for a quick admin review, then it'll appear on your public creator profile — votable as its own piece of content.</p>
+    <a class="btn btn-outline" onclick="navigate('discover')">Browse creators</a>
+  </div>`;
+}
+
+/* ---------------- Voting: guest name+phone+email, one vote per piece ---------------- */
+let pendingVotePostId = null;
+function openVoteModal(postId, title){
+  pendingVotePostId = postId;
+  document.getElementById("vote-modal-error").innerHTML = "";
+  document.getElementById("vote-modal-context").textContent = title
+    ? `Voting for "${title}". One vote per person, per piece.`
+    : "One vote per person, per piece.";
+  let saved = null;
+  try{ saved = JSON.parse(localStorage.getItem("openmic_voter")||"null"); }catch(_e){}
+  document.getElementById("vote-name").value = saved?.name || currentUser?.name || "";
+  document.getElementById("vote-phone").value = saved?.phone || "";
+  document.getElementById("vote-email").value = saved?.email || currentUser?.email || "";
+  document.getElementById("vote-modal-overlay").style.display = "flex";
+}
+function closeVoteModal(){
+  document.getElementById("vote-modal-overlay").style.display = "none";
+  pendingVotePostId = null;
+}
+async function confirmVote(){
+  const errEl = document.getElementById("vote-modal-error");
+  errEl.innerHTML = "";
+  const name = document.getElementById("vote-name").value.trim();
+  const phoneRaw = document.getElementById("vote-phone").value.trim();
+  const email = document.getElementById("vote-email").value.trim();
+  if(!name){ errEl.innerHTML = `<div class="form-error">Enter your name.</div>`; return; }
+  const phone = normalizePhoneMW(phoneRaw);
+  if(!phone){ errEl.innerHTML = `<div class="form-error">Enter a valid Malawian phone number, e.g. 0991234567.</div>`; return; }
+
+  const payload = { target_post_id: pendingVotePostId, voter_name: name, voter_phone: phone, voter_email: email || null };
+  if(currentUser) payload.voter_profile_id = currentUser.profileId;
+
+  const { error } = await sb.from('votes').insert(payload);
+  if(error){
+    if(error.message?.includes("DUPLICATE_VOTE") || error.code === '23505'){
+      errEl.innerHTML = `<div class="form-error">You've already voted for this piece.</div>`;
+    } else {
+      errEl.innerHTML = `<div class="form-error">${error.message}</div>`;
+    }
+    return;
+  }
+  localStorage.setItem("openmic_voter", JSON.stringify({name, phone, email}));
+  closeVoteModal();
+  refreshActiveView();
+}
+
+/* ---------------- Init ---------------- */
+(async function init(){
+  await loadCurrentUser();
+  renderAuthActions();
+  maybeShowCompleteProfile();
+  renderHome();
+})();
+</script>
+</body>
+</html>

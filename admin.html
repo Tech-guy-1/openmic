@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenMic — Admin</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+:root{
+  --ink:#15132A; --ink-2:#211D3D; --ink-soft:#57517E;
+  --paper:#FBF8F1; --paper-2:#F1ECDD; --line:#E3DDCB; --line-on-ink:#38335C;
+  --gold:#F2B705; --gold-ink:#4A3900; --coral:#FF5B4C; --white:#FFFFFF;
+  --font-display:'Fraunces',serif; --font-body:'IBM Plex Sans',system-ui,sans-serif;
+  --radius-sm:3px; --radius-md:6px;
+}
+*,*::before,*::after{ box-sizing:border-box; }
+body{ margin:0; font-family:var(--font-body); color:var(--ink); background:var(--paper); }
+h1,h2,h3{ font-family:var(--font-display); margin:0 0 .3em; font-weight:600; }
+p{ margin:0 0 1em; color:var(--ink-soft); }
+button{ font-family:inherit; cursor:pointer; }
+:focus-visible{ outline:3px solid var(--gold); outline-offset:2px; }
+
+.btn{ display:inline-flex; align-items:center; gap:6px; padding:9px 16px; border-radius:var(--radius-sm); font-weight:600; font-size:.85rem; border:1.5px solid transparent; }
+.btn-primary{ background:var(--coral); color:var(--white); }
+.btn-primary:hover{ background:#e64a3d; }
+.btn-outline{ background:transparent; border-color:var(--ink); color:var(--ink); }
+.btn-outline:hover{ background:var(--ink); color:var(--white); }
+.btn-danger{ background:#B23A2E; color:var(--white); }
+.btn-danger:hover{ background:#8f2d23; }
+.btn-sm{ padding:5px 10px; font-size:.78rem; }
+.btn[disabled]{ opacity:.5; cursor:not-allowed; }
+
+.auth-shell{ min-height:100vh; display:flex; align-items:center; justify-content:center; padding:40px 20px; background:var(--ink); }
+.auth-card{ width:100%; max-width:380px; background:var(--white); border-radius:var(--radius-md); padding:32px 28px; }
+.form-row{ margin-bottom:14px; display:flex; flex-direction:column; gap:6px; }
+.form-row label{ font-size:.83rem; font-weight:600; }
+.form-row input{ width:100%; font-size:.9rem; padding:9px 11px; border:1.5px solid var(--line); border-radius:var(--radius-sm); }
+.form-error{ background:#FBE9E7; color:#B23A2E; border:1px solid #F1B7AF; border-radius:var(--radius-sm); padding:9px 11px; font-size:.83rem; margin-bottom:13px; }
+.form-note{ background:var(--paper-2); border-radius:var(--radius-sm); padding:9px 11px; font-size:.78rem; color:var(--ink-soft); margin-top:14px; }
+
+.dash{ display:none; min-height:100vh; }
+.dash.active{ display:flex; }
+.sidebar{ width:220px; flex-shrink:0; background:var(--ink); color:#C9C4E8; padding:22px 16px; }
+.sidebar h2{ padding:0 6px 18px; }
+.sidebar-logo{ height:26px; width:auto; max-width:160px; object-fit:contain; }
+.sidebar button{ display:block; width:100%; text-align:left; background:none; border:none; color:#C9C4E8; padding:10px 8px; border-radius:var(--radius-sm); font-size:.88rem; margin-bottom:2px; }
+.sidebar button:hover{ background:var(--ink-2); color:var(--white); }
+.sidebar button.active{ background:var(--ink-2); color:var(--white); border-left:3px solid var(--gold); }
+.sidebar .logout{ margin-top:20px; color:#8E87B8; }
+.main{ flex:1; padding:28px 34px; overflow-y:auto; }
+.panel{ display:none; }
+.panel.active{ display:block; }
+.stats-row{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:16px; margin-bottom:26px; }
+.stat-card{ background:var(--white); border:1px solid var(--line); border-radius:var(--radius-md); padding:16px 18px; }
+.stat-card .num{ font-family:var(--font-display); font-size:1.7rem; color:var(--coral); }
+.stat-card .label{ font-size:.8rem; color:var(--ink-soft); }
+.toolbar{ display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; align-items:center; }
+.toolbar input[type="search"]{ padding:8px 11px; border:1.5px solid var(--line); border-radius:var(--radius-sm); font-size:.85rem; min-width:220px; }
+table{ width:100%; border-collapse:collapse; background:var(--white); border:1px solid var(--line); border-radius:var(--radius-md); overflow:hidden; }
+th,td{ text-align:left; padding:11px 14px; border-bottom:1px solid var(--line); font-size:.85rem; vertical-align:middle; }
+th{ background:var(--paper-2); font-size:.72rem; text-transform:uppercase; letter-spacing:.03em; color:var(--ink-soft); }
+tr:last-child td{ border-bottom:none; }
+.badge{ display:inline-block; padding:3px 9px; border-radius:99px; font-size:.72rem; font-weight:600; }
+.badge-admin{ background:#3E2F00; color:var(--gold); }
+.badge-organizer{ background:#1E3A5F; color:#9CC7F0; }
+.badge-user{ background:var(--paper-2); color:var(--ink-soft); }
+.badge-blocked{ background:#FBE9E7; color:#B23A2E; }
+.badge-active{ background:#E8F3EC; color:#1E6B3C; }
+.badge-pending{ background:#FFF3D6; color:#8A6D00; }
+.badge-published{ background:#E8F3EC; color:#1E6B3C; }
+.badge-removed{ background:#F1ECDD; color:var(--ink-soft); }
+.row-actions{ display:flex; gap:6px; flex-wrap:wrap; }
+.empty-state{ text-align:center; padding:40px; color:var(--ink-soft); }
+.muted{ color:var(--ink-soft); }
+</style>
+</head>
+<body>
+
+<!-- ===================== ADMIN LOGIN ===================== -->
+<div class="auth-shell" id="admin-login-shell">
+  <div class="auth-card">
+    <h1>Admin portal</h1>
+    <p>Restricted to OpenMic staff accounts.</p>
+    <div id="admin-error"></div>
+    <form onsubmit="return handleAdminLogin(event)">
+      <div class="form-row"><label for="admin-email">Email</label><input type="email" id="admin-email" required></div>
+      <div class="form-row"><label for="admin-password">Password</label><input type="password" id="admin-password" required></div>
+      <button class="btn btn-primary" type="submit" style="width:100%;justify-content:center;">Log in</button>
+    </form>
+    <div class="form-note">Sign in with the same account you promoted to <code>role = 'admin'</code> in Supabase. See the README for how to set that up.</div>
+  </div>
+</div>
+
+<!-- ===================== DASHBOARD ===================== -->
+<div class="dash" id="dashboard">
+  <aside class="sidebar">
+    <h2><img class="sidebar-logo" src="assets/logo.png" alt="Brand logo" onerror="this.style.display='none'"></h2>
+    <button class="tab-btn active" data-tab="overview" onclick="switchTab('overview')">Overview</button>
+    <button class="tab-btn" data-tab="users" onclick="switchTab('users')">Users</button>
+    <button class="tab-btn" data-tab="posts" onclick="switchTab('posts')">Posts</button>
+    <button class="tab-btn" data-tab="opportunities" onclick="switchTab('opportunities')">Opportunities</button>
+    <button class="tab-btn" data-tab="votes" onclick="switchTab('votes')">Votes</button>
+    <button class="logout" onclick="adminLogout()">Log out</button>
+    <button onclick="window.location.href='index.html'" style="margin-top:4px;">← Back to site</button>
+  </aside>
+  <main class="main">
+
+    <div class="panel active" id="panel-overview">
+      <h1>Overview</h1>
+      <div class="stats-row" id="overview-stats"></div>
+      <p class="form-note" style="max-width:640px;">Blocking a user immediately stops them casting votes, uploading, or posting opportunities (enforced by database policy, not just this UI) and hides their public profile. Deleting a user removes their profile, posts, and votes permanently.</p>
+    </div>
+
+    <div class="panel" id="panel-users">
+      <h1>Users</h1>
+      <div class="toolbar">
+        <input type="search" id="user-search" placeholder="Search by name or email" oninput="renderUsers()">
+        <select id="user-filter-role" onchange="renderUsers()">
+          <option value="all">All roles</option>
+          <option value="user">User</option>
+          <option value="organizer">Organizer</option>
+          <option value="admin">Admin</option>
+        </select>
+        <select id="user-filter-status" onchange="renderUsers()">
+          <option value="all">All statuses</option>
+          <option value="active">Active</option>
+          <option value="blocked">Blocked</option>
+        </select>
+      </div>
+      <table>
+        <thead><tr><th>Name</th><th>Contact</th><th>Type</th><th>Details</th><th>Status</th><th>Joined</th><th>Actions</th></tr></thead>
+        <tbody id="users-body"><tr><td colspan="7" class="empty-state">Loading…</td></tr></tbody>
+      </table>
+    </div>
+
+    <div class="panel" id="panel-posts">
+      <h1>Posts</h1>
+      <div class="toolbar">
+        <select id="post-filter-status" onchange="renderPosts()">
+          <option value="all">All statuses</option>
+          <option value="pending">Pending review</option>
+          <option value="published">Published</option>
+          <option value="removed">Removed</option>
+        </select>
+      </div>
+      <table>
+        <thead><tr><th>Title</th><th>Creator</th><th>Category</th><th>Status</th><th>Submitted</th><th>Actions</th></tr></thead>
+        <tbody id="posts-body"><tr><td colspan="6" class="empty-state">Loading…</td></tr></tbody>
+      </table>
+    </div>
+
+    <div class="panel" id="panel-opportunities">
+      <h1>Opportunities</h1>
+      <table>
+        <thead><tr><th>Title</th><th>Organization</th><th>Category</th><th>Status</th><th>Posted</th><th>Actions</th></tr></thead>
+        <tbody id="opportunities-body"><tr><td colspan="6" class="empty-state">Loading…</td></tr></tbody>
+      </table>
+    </div>
+
+    <div class="panel" id="panel-votes">
+      <h1>Votes</h1>
+      <p class="form-note" style="max-width:640px;margin-bottom:16px;">Raw voter contact details (name, phone, email) are only ever visible here — never on the public site. Voting doesn't require an account, so use this to spot-check for abuse (e.g. the same phone with slightly different names).</p>
+      <div class="toolbar">
+        <input type="search" id="vote-search" placeholder="Search by voter name, phone, email, or content title" oninput="renderVotes()">
+      </div>
+      <table>
+        <thead><tr><th>Content</th><th>Creator</th><th>Voter name</th><th>Phone</th><th>Email</th><th>Cast</th><th>Actions</th></tr></thead>
+        <tbody id="votes-body"><tr><td colspan="7" class="empty-state">Loading…</td></tr></tbody>
+      </table>
+    </div>
+
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/supabase-client.js"></script>
+<script>
+let adminProfile = null;
+
+async function handleAdminLogin(e){
+  e.preventDefault();
+  const errEl = document.getElementById("admin-error");
+  errEl.innerHTML = "";
+  const email = document.getElementById("admin-email").value.trim().toLowerCase();
+  const password = document.getElementById("admin-password").value;
+
+  const { error: authErr } = await sb.auth.signInWithPassword({ email, password });
+  if(authErr){ errEl.innerHTML = `<div class="form-error">${authErr.message}</div>`; return false; }
+
+  const ok = await checkAdminAndEnter();
+  if(!ok){ errEl.innerHTML = `<div class="form-error">This account isn't an admin.</div>`; await sb.auth.signOut(); }
+  return false;
+}
+
+async function checkAdminAndEnter(){
+  const { data: { session } } = await sb.auth.getSession();
+  if(!session) return false;
+  const { data: profile } = await sb.from('profiles').select('*').eq('auth_user_id', session.user.id).maybeSingle();
+  if(!profile || profile.role !== 'admin') return false;
+  adminProfile = profile;
+  document.getElementById("admin-login-shell").style.display = "none";
+  document.getElementById("dashboard").classList.add("active");
+  loadOverview();
+  return true;
+}
+
+async function adminLogout(){
+  await sb.auth.signOut();
+  window.location.reload();
+}
+
+function switchTab(tab){
+  document.querySelectorAll(".tab-btn").forEach(b=>b.classList.toggle("active", b.dataset.tab===tab));
+  document.querySelectorAll(".panel").forEach(p=>p.classList.toggle("active", p.id==="panel-"+tab));
+  if(tab==="overview") loadOverview();
+  if(tab==="users") renderUsers();
+  if(tab==="posts") renderPosts();
+  if(tab==="opportunities") renderOpportunities();
+  if(tab==="votes") renderVotes();
+}
+
+/* ---------------- Overview ---------------- */
+async function loadOverview(){
+  const [{ count: userCount }, { count: blockedCount }, { count: pendingCount }, { count: oppCount }, { count: voteCount }] = await Promise.all([
+    sb.from('profiles').select('*', { count:'exact', head:true }),
+    sb.from('profiles').select('*', { count:'exact', head:true }).eq('is_blocked', true),
+    sb.from('posts').select('*', { count:'exact', head:true }).eq('status','pending'),
+    sb.from('opportunities').select('*', { count:'exact', head:true }).eq('status','open'),
+    sb.from('votes').select('*', { count:'exact', head:true })
+  ]);
+  document.getElementById("overview-stats").innerHTML = `
+    <div class="stat-card"><div class="num">${userCount ?? 0}</div><div class="label">Total accounts</div></div>
+    <div class="stat-card"><div class="num">${blockedCount ?? 0}</div><div class="label">Blocked users</div></div>
+    <div class="stat-card"><div class="num">${pendingCount ?? 0}</div><div class="label">Posts pending review</div></div>
+    <div class="stat-card"><div class="num">${oppCount ?? 0}</div><div class="label">Open opportunities</div></div>
+    <div class="stat-card"><div class="num">${voteCount ?? 0}</div><div class="label">Total votes cast</div></div>
+  `;
+}
+
+/* ---------------- Users ---------------- */
+let allUsersCache = [];
+async function renderUsers(){
+  if(!allUsersCache.length){
+    const { data, error } = await sb.from('profiles').select('*').order('created_at',{ascending:false});
+    if(error){ document.getElementById("users-body").innerHTML = `<tr><td colspan="6" class="empty-state">${error.message}</td></tr>`; return; }
+    allUsersCache = data || [];
+  }
+  const search = document.getElementById("user-search").value.trim().toLowerCase();
+  const roleFilter = document.getElementById("user-filter-role").value;
+  const statusFilter = document.getElementById("user-filter-status").value;
+
+  let list = allUsersCache.filter(u=>{
+    const matchSearch = !search || (u.full_name||"").toLowerCase().includes(search) || (u.email||"").toLowerCase().includes(search);
+    const matchRole = roleFilter==="all" || u.role===roleFilter;
+    const matchStatus = statusFilter==="all" || (statusFilter==="blocked" ? u.is_blocked : !u.is_blocked);
+    return matchSearch && matchRole && matchStatus;
+  });
+
+  const typeLabel = { user:"Creator", organizer:"Brand", admin:"Admin" };
+  document.getElementById("users-body").innerHTML = list.length ? list.map(u=>{
+    const details = u.role === 'organizer'
+      ? `${u.brand_name||"—"}${u.industry? ' · '+u.industry:''}`
+      : u.role === 'user'
+        ? `${u.university||"—"}${u.year_of_study? ' · '+u.year_of_study:''}`
+        : "—";
+    return `
+    <tr>
+      <td>${u.full_name||""}</td>
+      <td>${u.email||"<em>no login</em>"}<br><span class="muted" style="font-size:.78rem;">${u.phone||""}</span></td>
+      <td><span class="badge badge-${u.role}">${typeLabel[u.role]||u.role}</span></td>
+      <td>${details}${u.city? ' · '+u.city:''}</td>
+      <td><span class="badge ${u.is_blocked?'badge-blocked':'badge-active'}">${u.is_blocked?'Blocked':'Active'}</span></td>
+      <td>${new Date(u.created_at).toLocaleDateString()}</td>
+      <td class="row-actions">
+        ${u.is_blocked
+          ? `<button class="btn btn-outline btn-sm" onclick="unblockUser('${u.id}')">Unblock</button>`
+          : `<button class="btn btn-outline btn-sm" onclick="blockUser('${u.id}')">Block</button>`}
+        ${u.role!=='admin'
+          ? `<button class="btn btn-outline btn-sm" onclick="makeAdmin('${u.id}')">Make admin</button>`
+          : ``}
+        <button class="btn btn-danger btn-sm" onclick="deleteUser('${u.id}')">Delete</button>
+      </td>
+    </tr>
+  `;}).join("") : `<tr><td colspan="7" class="empty-state">No users match.</td></tr>`;
+}
+async function blockUser(id){
+  const { error } = await sb.from('profiles').update({ is_blocked:true }).eq('id', id);
+  if(error){ alert(error.message); return; }
+  allUsersCache = []; renderUsers(); loadOverview();
+}
+async function unblockUser(id){
+  const { error } = await sb.from('profiles').update({ is_blocked:false }).eq('id', id);
+  if(error){ alert(error.message); return; }
+  allUsersCache = []; renderUsers(); loadOverview();
+}
+async function makeAdmin(id){
+  if(!confirm("Give this account admin access to the dashboard?")) return;
+  const { error } = await sb.from('profiles').update({ role:'admin' }).eq('id', id);
+  if(error){ alert(error.message); return; }
+  allUsersCache = []; renderUsers();
+}
+async function deleteUser(id){
+  if(!confirm("Delete this user's profile, posts and votes permanently? This cannot be undone.\n\nNote: this removes their OpenMic data. If they signed up with email/Google, their login account itself is removed separately — see the README's optional admin-delete-user function.")) return;
+  const { error } = await sb.from('profiles').delete().eq('id', id);
+  if(error){ alert(error.message); return; }
+  allUsersCache = []; renderUsers(); loadOverview();
+}
+
+/* ---------------- Posts ---------------- */
+async function renderPosts(){
+  const statusFilter = document.getElementById("post-filter-status").value;
+  let query = sb.from('posts').select('*, profiles(full_name)').order('created_at',{ascending:false});
+  if(statusFilter !== "all") query = query.eq('status', statusFilter);
+  const { data, error } = await query;
+  if(error){ document.getElementById("posts-body").innerHTML = `<tr><td colspan="6" class="empty-state">${error.message}</td></tr>`; return; }
+
+  document.getElementById("posts-body").innerHTML = (data&&data.length) ? data.map(p=>`
+    <tr>
+      <td>${p.title}</td>
+      <td>${p.profiles ? p.profiles.full_name : ""}</td>
+      <td>${p.category||""}</td>
+      <td><span class="badge badge-${p.status}">${p.status}</span></td>
+      <td>${new Date(p.created_at).toLocaleDateString()}</td>
+      <td class="row-actions">
+        ${p.status!=='published' ? `<button class="btn btn-outline btn-sm" onclick="setPostStatus('${p.id}','published')">Publish</button>` : ``}
+        ${p.status!=='removed' ? `<button class="btn btn-outline btn-sm" onclick="setPostStatus('${p.id}','removed')">Remove</button>` : ``}
+        <button class="btn btn-danger btn-sm" onclick="deletePost('${p.id}')">Delete</button>
+      </td>
+    </tr>
+  `).join("") : `<tr><td colspan="6" class="empty-state">No posts.</td></tr>`;
+}
+async function setPostStatus(id, status){
+  const { error } = await sb.from('posts').update({ status }).eq('id', id);
+  if(error){ alert(error.message); return; }
+  renderPosts(); loadOverview();
+}
+async function deletePost(id){
+  if(!confirm("Delete this post permanently?")) return;
+  const { error } = await sb.from('posts').delete().eq('id', id);
+  if(error){ alert(error.message); return; }
+  renderPosts();
+}
+
+/* ---------------- Opportunities ---------------- */
+async function renderOpportunities(){
+  const { data, error } = await sb.from('opportunities').select('*').order('created_at',{ascending:false});
+  if(error){ document.getElementById("opportunities-body").innerHTML = `<tr><td colspan="6" class="empty-state">${error.message}</td></tr>`; return; }
+  document.getElementById("opportunities-body").innerHTML = (data&&data.length) ? data.map(o=>`
+    <tr>
+      <td>${o.title}</td>
+      <td>${o.org_name}</td>
+      <td>${o.category||""}</td>
+      <td><span class="badge ${o.status==='open'?'badge-active':'badge-removed'}">${o.status}</span></td>
+      <td>${new Date(o.created_at).toLocaleDateString()}</td>
+      <td class="row-actions">
+        ${o.status==='open'
+          ? `<button class="btn btn-outline btn-sm" onclick="setOppStatus('${o.id}','closed')">Close</button>`
+          : `<button class="btn btn-outline btn-sm" onclick="setOppStatus('${o.id}','open')">Reopen</button>`}
+        <button class="btn btn-danger btn-sm" onclick="deleteOpp('${o.id}')">Delete</button>
+      </td>
+    </tr>
+  `).join("") : `<tr><td colspan="6" class="empty-state">No opportunities.</td></tr>`;
+}
+async function setOppStatus(id, status){
+  const { error } = await sb.from('opportunities').update({ status }).eq('id', id);
+  if(error){ alert(error.message); return; }
+  renderOpportunities(); loadOverview();
+}
+async function deleteOpp(id){
+  if(!confirm("Delete this opportunity permanently?")) return;
+  const { error } = await sb.from('opportunities').delete().eq('id', id);
+  if(error){ alert(error.message); return; }
+  renderOpportunities();
+}
+
+/* ---------------- Votes ---------------- */
+let allVotesCache = [];
+async function renderVotes(){
+  if(!allVotesCache.length){
+    const { data, error } = await sb.from('votes')
+      .select('*, posts(title, profiles(full_name))')
+      .order('created_at',{ascending:false});
+    if(error){ document.getElementById("votes-body").innerHTML = `<tr><td colspan="7" class="empty-state">${error.message}</td></tr>`; return; }
+    allVotesCache = data || [];
+  }
+  const search = document.getElementById("vote-search").value.trim().toLowerCase();
+  const list = allVotesCache.filter(v=>{
+    if(!search) return true;
+    return (v.voter_name||"").toLowerCase().includes(search)
+      || (v.voter_phone||"").toLowerCase().includes(search)
+      || (v.voter_email||"").toLowerCase().includes(search)
+      || (v.posts?.title||"").toLowerCase().includes(search);
+  });
+  document.getElementById("votes-body").innerHTML = list.length ? list.map(v=>`
+    <tr>
+      <td>${v.posts?.title||"<em>deleted content</em>"}</td>
+      <td>${v.posts?.profiles?.full_name||""}</td>
+      <td>${v.voter_name}</td>
+      <td>${v.voter_phone}</td>
+      <td>${v.voter_email||"—"}</td>
+      <td>${new Date(v.created_at).toLocaleString()}</td>
+      <td class="row-actions"><button class="btn btn-danger btn-sm" onclick="deleteVote('${v.id}')">Delete</button></td>
+    </tr>
+  `).join("") : `<tr><td colspan="7" class="empty-state">No votes match.</td></tr>`;
+}
+async function deleteVote(id){
+  if(!confirm("Delete this vote? The voter will be able to vote again for this content afterwards.")) return;
+  const { error } = await sb.from('votes').delete().eq('id', id);
+  if(error){ alert(error.message); return; }
+  allVotesCache = []; renderVotes(); loadOverview();
+}
+
+/* ---------------- Init: resume session if already logged in as admin ---------------- */
+(async function init(){
+  const { data: { session } } = await sb.auth.getSession();
+  if(session) await checkAdminAndEnter();
+})();
+</script>
+</body>
+</html>
