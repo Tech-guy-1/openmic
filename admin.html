@@ -42,7 +42,7 @@ button{ font-family:inherit; cursor:pointer; }
 .dash.active{ display:flex; }
 .sidebar{ width:220px; flex-shrink:0; background:var(--ink); color:#C9C4E8; padding:22px 16px; }
 .sidebar h2{ padding:0 6px 18px; }
-.sidebar-logo{ height:26px; width:auto; max-width:160px; object-fit:contain; }
+.sidebar-logo{ height:38px; width:auto; max-width:200px; object-fit:contain; }
 .sidebar button{ display:block; width:100%; text-align:left; background:none; border:none; color:#C9C4E8; padding:10px 8px; border-radius:var(--radius-sm); font-size:.88rem; margin-bottom:2px; }
 .sidebar button:hover{ background:var(--ink-2); color:var(--white); }
 .sidebar button.active{ background:var(--ink-2); color:var(--white); border-left:3px solid var(--gold); }
@@ -87,7 +87,6 @@ tr:last-child td{ border-bottom:none; }
       <div class="form-row"><label for="admin-password">Password</label><input type="password" id="admin-password" required></div>
       <button class="btn btn-primary" type="submit" style="width:100%;justify-content:center;">Log in</button>
     </form>
-    <div class="form-note">Sign in with the same account you promoted to <code>role = 'admin'</code> in Supabase. See the README for how to set that up.</div>
   </div>
 </div>
 
