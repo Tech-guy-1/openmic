@@ -52,7 +52,8 @@ button{ font-family:inherit; }
 .main-nav a.active{ color:var(--white); border-bottom-color:var(--gold); }
 .nav-actions{ display:flex; align-items:center; gap:12px; }
 .user-chip{ display:flex; align-items:center; gap:8px; background:var(--ink-2); border:1px solid var(--line-on-ink); border-radius:999px; padding:5px 12px 5px 5px; }
-.user-chip .avatar{ width:26px; height:26px; border-radius:50%; background:var(--gold); color:var(--gold-ink); font-weight:700; font-size:.72rem; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+.user-chip .avatar{ width:26px; height:26px; border-radius:50%; background:var(--gold); color:var(--gold-ink); font-weight:700; font-size:.72rem; display:flex; align-items:center; justify-content:center; overflow:hidden; box-sizing:content-box; border:2px solid transparent; }
+.avatar-ring-active{ border-color:#3EBD5A !important; }
 .user-chip .avatar img{ width:100%; height:100%; object-fit:cover; }
 .user-chip span{ font-size:.83rem; color:var(--white); }
 .link-btn{ background:none; border:none; color:#C9C4E8; cursor:pointer; font-size:.85rem; padding:6px 4px; }
@@ -341,6 +342,14 @@ select:focus, input:focus{ border-color:var(--ink); }
   </section>
 </div>
 
+<!-- ===================== PROFILE ===================== -->
+<div class="view" id="view-profile">
+  <div class="page-header"><div class="container"><h1>My profile</h1><p>Your details, and your profile photo.</p></div></div>
+  <section>
+    <div class="container" id="profile-container"></div>
+  </section>
+</div>
+
 <!-- ===================== LOGIN ===================== -->
 <div class="view" id="view-login">
   <div class="auth-shell">
@@ -378,7 +387,6 @@ select:focus, input:focus{ border-color:var(--ink); }
         <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.9c1.7-1.57 2.7-3.88 2.7-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.9-2.26c-.81.54-1.84.86-3.06.86-2.35 0-4.34-1.59-5.05-3.72H.96v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.95 10.7A5.4 5.4 0 0 1 3.67 9c0-.59.1-1.16.28-1.7V4.97H.96A9 9 0 0 0 0 9c0 1.45.35 2.83.96 4.03l2.99-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .96 4.97l2.99 2.33C4.66 5.17 6.65 3.58 9 3.58z"/></svg>
         Continue with Google
       </button>
-      <div class="form-note" style="margin-top:10px;margin-bottom:0;">Signing up with Google? You'll be asked for the details below right after — Google doesn't share them.</div>
       <div class="divider">or</div>
       <form onsubmit="return handleSignup(event)">
         <div class="form-row"><label for="signup-name">Full name</label><input type="text" id="signup-name" required></div>
@@ -549,10 +557,20 @@ async function loadCurrentUser(){
     return;
   }
 
+  if(profile.role === 'admin'){
+    alert("This is an admin account — it can only be used to sign in to the admin portal (admin.html), not the main site.");
+    await sb.auth.signOut();
+    currentUser = null;
+    return;
+  }
+
   currentUser = {
     profileId: profile.id, authId: profile.auth_user_id, name: profile.full_name,
     email: profile.email, role: profile.role, isCreator: profile.is_creator,
     avatarUrl: profile.avatar_url, brandName: profile.brand_name,
+    phone: profile.phone, city: profile.city, university: profile.university,
+    yearOfStudy: profile.year_of_study, bio: profile.bio, industry: profile.industry,
+    businessEmail: profile.business_email,
     profileComplete: profile.profile_complete
   };
 }
@@ -569,8 +587,8 @@ function renderAuthActions(){
   if(currentUser){
     const avatar = currentUser.avatarUrl ? `<img src="${currentUser.avatarUrl}" alt="">` : initials(currentUser.name);
     el.innerHTML = `
-      <div class="user-chip">
-        <span class="avatar">${avatar}</span>
+      <div class="user-chip" onclick="navigate('profile')" style="cursor:pointer;">
+        <span class="avatar avatar-ring-active">${avatar}</span>
         <span>${(currentUser.name||"").split(" ")[0]}</span>
       </div>
       <button class="link-btn" onclick="logout()">Log out</button>
@@ -728,6 +746,7 @@ function renderForView(viewName){
   if(viewName==="leaderboard") renderLeaderboard();
   if(viewName==="opportunities") renderOpportunities();
   if(viewName==="upload") renderUpload();
+  if(viewName==="profile") renderProfile();
 }
 
 /* ---------------- Data access ---------------- */
@@ -957,21 +976,46 @@ function renderUpload(){
   }
   el.innerHTML = `<div class="upload-card">
     <div id="upload-error"></div>
-    <div class="dropzone">Drag a video or image here, or click to select a file<br><small>(file hosting isn't wired up in this build — titles are saved, media upload is a next step)</small></div>
+    <div class="form-row"><label>Photo or video</label>
+      <input type="file" id="upload-file" accept="image/*,video/*">
+      <small class="muted">Optional for now, but this is what shows up when someone opens the piece.</small>
+    </div>
     <div class="form-row"><label>Title</label><input type="text" id="upload-title" placeholder="e.g. Live at open mic night"></div>
     <div class="form-row"><label>Category</label>
       <select id="upload-category" style="width:100%;">${CATEGORIES.map(c=>`<option>${c}</option>`).join("")}</select>
     </div>
-    <button class="btn btn-primary btn-block" onclick="submitUpload()">Publish</button>
+    <button class="btn btn-primary btn-block" id="upload-submit-btn" onclick="submitUpload()">Publish</button>
   </div>`;
 }
 async function submitUpload(){
   const title = document.getElementById("upload-title").value.trim();
   const category = document.getElementById("upload-category").value;
-  if(!title){ document.getElementById("upload-error").innerHTML = `<div class="form-error">Give your post a title.</div>`; return; }
+  const fileInput = document.getElementById("upload-file");
+  const file = fileInput.files[0];
+  const errEl = document.getElementById("upload-error");
+  errEl.innerHTML = "";
+  if(!title){ errEl.innerHTML = `<div class="form-error">Give your post a title.</div>`; return; }
 
-  const { error: postErr } = await sb.from('posts').insert({ profile_id: currentUser.profileId, title, category, status: 'pending' });
-  if(postErr){ document.getElementById("upload-error").innerHTML = `<div class="form-error">${postErr.message}</div>`; return; }
+  const btn = document.getElementById("upload-submit-btn");
+  btn.disabled = true;
+  btn.textContent = "Publishing…";
+
+  let mediaUrl = null;
+  if(file){
+    const ext = file.name.split('.').pop();
+    const path = `${currentUser.authId}/${Date.now()}.${ext}`;
+    const { error: uploadErr } = await sb.storage.from('posts-media').upload(path, file);
+    if(uploadErr){
+      errEl.innerHTML = `<div class="form-error">Couldn't upload the file: ${uploadErr.message}</div>`;
+      btn.disabled = false; btn.textContent = "Publish";
+      return;
+    }
+    mediaUrl = sb.storage.from('posts-media').getPublicUrl(path).data.publicUrl;
+  }
+
+  const { error: postErr } = await sb.from('posts').insert({ profile_id: currentUser.profileId, title, category, media_url: mediaUrl, status: 'pending' });
+  if(postErr){ errEl.innerHTML = `<div class="form-error">${postErr.message}</div>`; btn.disabled = false; btn.textContent = "Publish"; return; }
+
 
   await sb.from('profiles').update({ is_creator: true, category }).eq('id', currentUser.profileId);
   currentUser.isCreator = true;
@@ -982,7 +1026,91 @@ async function submitUpload(){
   </div>`;
 }
 
-/* ---------------- Voting: guest name+phone+email, one vote per piece ---------------- */
+/* ---------------- Profile: view/edit info + avatar upload ---------------- */
+function renderProfile(){
+  const el = document.getElementById("profile-container");
+  if(!currentUser){
+    el.innerHTML = `<div class="upload-card">
+      <h3>Log in to view your profile</h3>
+      <a class="btn btn-primary" onclick="navigate('login')">Log in</a>
+    </div>`;
+    return;
+  }
+  const avatar = currentUser.avatarUrl ? `<img src="${currentUser.avatarUrl}" alt="">` : initials(currentUser.name);
+  const roleFields = currentUser.role === 'organizer' ? `
+    <div class="form-row"><label>Brand name</label><input type="text" id="pf-brand-name" value="${currentUser.brandName||''}"></div>
+    <div class="form-row"><label>Industry</label>
+      <select id="pf-industry">${INDUSTRIES.map(i=>`<option ${i===currentUser.industry?'selected':''}>${i}</option>`).join("")}</select>
+    </div>
+    <div class="form-row"><label>Business email</label><input type="email" id="pf-business-email" value="${currentUser.businessEmail||''}"></div>
+  ` : `
+    <div class="form-row"><label>University</label>
+      <select id="pf-university">${UNIVERSITIES.map(u=>`<option ${u===currentUser.university?'selected':''}>${u}</option>`).join("")}</select>
+    </div>
+    <div class="form-row"><label>Year of study</label>
+      <select id="pf-year">${YEAR_OPTIONS.map(y=>`<option ${y===currentUser.yearOfStudy?'selected':''}>${y}</option>`).join("")}</select>
+    </div>
+  `;
+  el.innerHTML = `<div class="upload-card">
+    <div id="profile-error"></div>
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+      <span class="avatar" style="width:64px;height:64px;font-size:1.4rem;border-radius:50%;background:var(--gold);color:var(--gold-ink);display:flex;align-items:center;justify-content:center;overflow:hidden;border:2.5px solid #3EBD5A;">${avatar}</span>
+      <div>
+        <label class="btn btn-outline btn-sm" style="cursor:pointer;">
+          Change photo
+          <input type="file" id="pf-avatar-file" accept="image/*" style="display:none;" onchange="handleAvatarUpload()">
+        </label>
+        <div class="muted" style="font-size:.78rem;margin-top:6px;">JPG or PNG works best.</div>
+      </div>
+    </div>
+    <div class="form-row"><label>Full name</label><input type="text" id="pf-name" value="${currentUser.name||''}"></div>
+    <div class="form-row"><label>Phone number</label><input type="tel" id="pf-phone" value="${currentUser.phone||''}"></div>
+    <div class="form-row"><label>City</label><input type="text" id="pf-city" value="${currentUser.city||''}"></div>
+    ${roleFields}
+    <div class="form-row"><label>Bio</label><textarea id="pf-bio" rows="3" style="width:100%;font-family:inherit;padding:9px 11px;border:1.5px solid var(--line);border-radius:var(--radius-sm);">${currentUser.bio||''}</textarea></div>
+    <button class="btn btn-primary btn-block" onclick="submitProfileEdit()">Save changes</button>
+  </div>`;
+}
+async function handleAvatarUpload(){
+  const fileInput = document.getElementById("pf-avatar-file");
+  const file = fileInput.files[0];
+  if(!file) return;
+  const errEl = document.getElementById("profile-error");
+  errEl.innerHTML = "";
+  const ext = file.name.split('.').pop();
+  const path = `${currentUser.authId}/avatar.${ext}`;
+  const { error: uploadErr } = await sb.storage.from('avatars').upload(path, file, { upsert: true });
+  if(uploadErr){ errEl.innerHTML = `<div class="form-error">Couldn't upload photo: ${uploadErr.message}</div>`; return; }
+  const publicUrl = sb.storage.from('avatars').getPublicUrl(path).data.publicUrl + `?t=${Date.now()}`;
+  const { error: updateErr } = await sb.from('profiles').update({ avatar_url: publicUrl }).eq('id', currentUser.profileId);
+  if(updateErr){ errEl.innerHTML = `<div class="form-error">${updateErr.message}</div>`; return; }
+  currentUser.avatarUrl = publicUrl;
+  renderAuthActions();
+  renderProfile();
+}
+async function submitProfileEdit(){
+  const errEl = document.getElementById("profile-error");
+  errEl.innerHTML = "";
+  const updates = {
+    full_name: document.getElementById("pf-name").value.trim(),
+    phone: normalizePhoneMW(document.getElementById("pf-phone").value.trim()) || currentUser.phone,
+    city: document.getElementById("pf-city").value.trim(),
+    bio: document.getElementById("pf-bio").value.trim()
+  };
+  if(currentUser.role === 'organizer'){
+    updates.brand_name = document.getElementById("pf-brand-name").value.trim();
+    updates.industry = document.getElementById("pf-industry").value;
+    updates.business_email = document.getElementById("pf-business-email").value.trim();
+  } else {
+    updates.university = document.getElementById("pf-university").value;
+    updates.year_of_study = document.getElementById("pf-year").value;
+  }
+  const { error } = await sb.from('profiles').update(updates).eq('id', currentUser.profileId);
+  if(error){ errEl.innerHTML = `<div class="form-error">${error.message}</div>`; return; }
+  await loadCurrentUser();
+  renderAuthActions();
+  renderProfile();
+}
 let pendingVotePostId = null;
 function openVoteModal(postId, title){
   pendingVotePostId = postId;

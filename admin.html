@@ -12,6 +12,7 @@
   --ink:#15132A; --ink-2:#211D3D; --ink-soft:#57517E;
   --paper:#FBF8F1; --paper-2:#F1ECDD; --line:#E3DDCB; --line-on-ink:#38335C;
   --gold:#F2B705; --gold-ink:#4A3900; --coral:#FF5B4C; --white:#FFFFFF;
+  --green:#1E6B3C; --red:#B23A2E; --grey:#6B6685;
   --font-display:'Fraunces',serif; --font-body:'IBM Plex Sans',system-ui,sans-serif;
   --radius-sm:3px; --radius-md:6px;
 }
@@ -27,7 +28,7 @@ button{ font-family:inherit; cursor:pointer; }
 .btn-primary:hover{ background:#e64a3d; }
 .btn-outline{ background:transparent; border-color:var(--ink); color:var(--ink); }
 .btn-outline:hover{ background:var(--ink); color:var(--white); }
-.btn-danger{ background:#B23A2E; color:var(--white); }
+.btn-danger{ background:var(--red); color:var(--white); }
 .btn-danger:hover{ background:#8f2d23; }
 .btn-sm{ padding:5px 10px; font-size:.78rem; }
 .btn[disabled]{ opacity:.5; cursor:not-allowed; }
@@ -36,16 +37,17 @@ button{ font-family:inherit; cursor:pointer; }
 .auth-card{ width:100%; max-width:380px; background:var(--white); border-radius:var(--radius-md); padding:32px 28px; }
 .form-row{ margin-bottom:14px; display:flex; flex-direction:column; gap:6px; }
 .form-row label{ font-size:.83rem; font-weight:600; }
-.form-row input{ width:100%; font-size:.9rem; padding:9px 11px; border:1.5px solid var(--line); border-radius:var(--radius-sm); }
-.form-error{ background:#FBE9E7; color:#B23A2E; border:1px solid #F1B7AF; border-radius:var(--radius-sm); padding:9px 11px; font-size:.83rem; margin-bottom:13px; }
+.form-row input, .form-row select, .form-row textarea{ width:100%; font-size:.9rem; padding:9px 11px; border:1.5px solid var(--line); border-radius:var(--radius-sm); font-family:inherit; }
+.form-error{ background:#FBE9E7; color:var(--red); border:1px solid #F1B7AF; border-radius:var(--radius-sm); padding:9px 11px; font-size:.83rem; margin-bottom:13px; }
 .form-note{ background:var(--paper-2); border-radius:var(--radius-sm); padding:9px 11px; font-size:.78rem; color:var(--ink-soft); margin-top:14px; }
+.muted{ color:var(--ink-soft); }
 
 .dash{ display:none; min-height:100vh; }
 .dash.active{ display:flex; }
 .sidebar{ width:220px; flex-shrink:0; background:var(--ink); color:#C9C4E8; padding:22px 16px; }
 .sidebar h2{ padding:0 6px 18px; }
 .sidebar-logo{ height:38px; width:auto; max-width:200px; object-fit:contain; }
-.sidebar button{ display:block; width:100%; text-align:left; background:none; border:none; color:#C9C4E8; padding:10px 8px; border-radius:var(--radius-sm); font-size:.88rem; margin-bottom:2px; }
+.sidebar button.tab-btn, .sidebar button.logout, .sidebar>button{ display:block; width:100%; text-align:left; background:none; border:none; color:#C9C4E8; padding:10px 8px; border-radius:var(--radius-sm); font-size:.88rem; margin-bottom:2px; }
 .sidebar button:hover{ background:var(--ink-2); color:var(--white); }
 .sidebar button.active{ background:var(--ink-2); color:var(--white); border-left:3px solid var(--gold); }
 .sidebar .logout{ margin-top:20px; color:#8E87B8; }
@@ -54,26 +56,53 @@ button{ font-family:inherit; cursor:pointer; }
 .panel.active{ display:block; }
 .stats-row{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:16px; margin-bottom:26px; }
 .stat-card{ background:var(--white); border:1px solid var(--line); border-radius:var(--radius-md); padding:16px 18px; }
-.stat-card .num{ font-family:var(--font-display); font-size:1.7rem; color:var(--coral); }
+.stat-card .num{ font-family:var(--font-display); font-size:1.7rem; }
 .stat-card .label{ font-size:.8rem; color:var(--ink-soft); }
+.num-black{ color:var(--ink); } .num-red{ color:var(--red); } .num-grey{ color:var(--grey); } .num-green{ color:var(--green); }
+
+.top-creators{ background:var(--white); border:1px solid var(--line); border-radius:var(--radius-md); padding:18px 20px; max-width:520px; }
+.top-creators ol{ margin:0; padding-left:20px; }
+.top-creators li{ padding:7px 0; border-bottom:1px dashed var(--line); font-size:.9rem; display:flex; justify-content:space-between; gap:12px; }
+.top-creators li:last-child{ border-bottom:none; }
+.top-creators .tc-votes{ color:var(--coral); font-weight:700; white-space:nowrap; }
+
 .toolbar{ display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; align-items:center; }
 .toolbar input[type="search"]{ padding:8px 11px; border:1.5px solid var(--line); border-radius:var(--radius-sm); font-size:.85rem; min-width:220px; }
+.toolbar select{ padding:8px 11px; border:1.5px solid var(--line); border-radius:var(--radius-sm); font-size:.85rem; }
 table{ width:100%; border-collapse:collapse; background:var(--white); border:1px solid var(--line); border-radius:var(--radius-md); overflow:hidden; }
 th,td{ text-align:left; padding:11px 14px; border-bottom:1px solid var(--line); font-size:.85rem; vertical-align:middle; }
 th{ background:var(--paper-2); font-size:.72rem; text-transform:uppercase; letter-spacing:.03em; color:var(--ink-soft); }
 tr:last-child td{ border-bottom:none; }
+tr.clickable{ cursor:pointer; }
+tr.clickable:hover{ background:var(--paper-2); }
 .badge{ display:inline-block; padding:3px 9px; border-radius:99px; font-size:.72rem; font-weight:600; }
 .badge-admin{ background:#3E2F00; color:var(--gold); }
 .badge-organizer{ background:#1E3A5F; color:#9CC7F0; }
 .badge-user{ background:var(--paper-2); color:var(--ink-soft); }
-.badge-blocked{ background:#FBE9E7; color:#B23A2E; }
-.badge-active{ background:#E8F3EC; color:#1E6B3C; }
+.badge-blocked{ background:#FBE9E7; color:var(--red); }
+.badge-active{ background:#E8F3EC; color:var(--green); }
 .badge-pending{ background:#FFF3D6; color:#8A6D00; }
-.badge-published{ background:#E8F3EC; color:#1E6B3C; }
-.badge-removed{ background:#F1ECDD; color:var(--ink-soft); }
+.badge-published{ background:#E8F3EC; color:var(--green); }
+.badge-removed{ background:#FBE9E7; color:var(--red); }
 .row-actions{ display:flex; gap:6px; flex-wrap:wrap; }
 .empty-state{ text-align:center; padding:40px; color:var(--ink-soft); }
-.muted{ color:var(--ink-soft); }
+
+.avatar-circle{ width:34px; height:34px; border-radius:50%; overflow:hidden; display:flex; align-items:center; justify-content:center; background:var(--paper-2); color:var(--ink-soft); font-weight:700; font-size:.78rem; flex-shrink:0; box-sizing:content-box; border:2.5px solid transparent; }
+.avatar-circle img{ width:100%; height:100%; object-fit:cover; }
+.avatar-active{ border-color:#3EBD5A; }
+.avatar-blocked{ border-color:var(--line); }
+.avatar-lg{ width:64px; height:64px; font-size:1.3rem; }
+
+.modal-overlay{ position:fixed; inset:0; background:rgba(21,19,42,.65); z-index:100; display:none; align-items:center; justify-content:center; padding:20px; }
+.modal-card{ background:var(--white); border-radius:var(--radius-md); padding:28px 26px; width:100%; max-width:520px; max-height:88vh; overflow-y:auto; }
+.modal-card.wide{ max-width:640px; }
+.modal-close{ float:right; background:none; border:none; font-size:1.3rem; cursor:pointer; color:var(--ink-soft); line-height:1; }
+.detail-row{ display:flex; justify-content:space-between; gap:12px; padding:8px 0; border-bottom:1px dashed var(--line); font-size:.88rem; }
+.detail-row:last-child{ border-bottom:none; }
+.detail-row .k{ color:var(--ink-soft); }
+.detail-row .v{ font-weight:600; text-align:right; }
+.detail-header{ display:flex; align-items:center; gap:14px; margin-bottom:16px; }
+.media-preview{ width:100%; max-height:360px; border-radius:var(--radius-sm); background:var(--paper-2); margin-bottom:14px; object-fit:contain; }
 </style>
 </head>
 <body>
@@ -109,7 +138,10 @@ tr:last-child td{ border-bottom:none; }
     <div class="panel active" id="panel-overview">
       <h1>Overview</h1>
       <div class="stats-row" id="overview-stats"></div>
-      <p class="form-note" style="max-width:640px;">Blocking a user immediately stops them casting votes, uploading, or posting opportunities (enforced by database policy, not just this UI) and hides their public profile. Deleting a user removes their profile, posts, and votes permanently.</p>
+      <div class="top-creators">
+        <h3 style="font-size:1rem;">Top creators by votes</h3>
+        <ol id="top-creators-list"><li>Loading…</li></ol>
+      </div>
     </div>
 
     <div class="panel" id="panel-users">
@@ -117,20 +149,23 @@ tr:last-child td{ border-bottom:none; }
       <div class="toolbar">
         <input type="search" id="user-search" placeholder="Search by name or email" oninput="renderUsers()">
         <select id="user-filter-role" onchange="renderUsers()">
-          <option value="all">All roles</option>
-          <option value="user">User</option>
-          <option value="organizer">Organizer</option>
-          <option value="admin">Admin</option>
+          <option value="all">All types</option>
+          <option value="user">Creators</option>
+          <option value="organizer">Brands</option>
+          <option value="admin">Admins</option>
         </select>
         <select id="user-filter-status" onchange="renderUsers()">
           <option value="all">All statuses</option>
           <option value="active">Active</option>
           <option value="blocked">Blocked</option>
         </select>
+        <select id="user-filter-category" onchange="renderUsers()">
+          <option value="all">All creative categories</option>
+        </select>
       </div>
       <table>
-        <thead><tr><th>Name</th><th>Contact</th><th>Type</th><th>Details</th><th>Status</th><th>Joined</th><th>Actions</th></tr></thead>
-        <tbody id="users-body"><tr><td colspan="7" class="empty-state">Loading…</td></tr></tbody>
+        <thead><tr><th></th><th>Name</th><th>Contact</th><th>Type</th><th>Details</th><th>Status</th><th>Joined</th><th>Actions</th></tr></thead>
+        <tbody id="users-body"><tr><td colspan="8" class="empty-state">Loading…</td></tr></tbody>
       </table>
     </div>
 
@@ -141,7 +176,7 @@ tr:last-child td{ border-bottom:none; }
           <option value="all">All statuses</option>
           <option value="pending">Pending review</option>
           <option value="published">Published</option>
-          <option value="removed">Removed</option>
+          <option value="removed">Rejected / removed</option>
         </select>
       </div>
       <table>
@@ -160,9 +195,11 @@ tr:last-child td{ border-bottom:none; }
 
     <div class="panel" id="panel-votes">
       <h1>Votes</h1>
-      <p class="form-note" style="max-width:640px;margin-bottom:16px;">Raw voter contact details (name, phone, email) are only ever visible here — never on the public site. Voting doesn't require an account, so use this to spot-check for abuse (e.g. the same phone with slightly different names).</p>
       <div class="toolbar">
-        <input type="search" id="vote-search" placeholder="Search by voter name, phone, email, or content title" oninput="renderVotes()">
+        <input type="search" id="vote-search" placeholder="Search voter name, phone, or email" oninput="renderVotes()">
+        <select id="vote-filter-category" onchange="renderVotes()"><option value="all">All categories</option></select>
+        <select id="vote-filter-creator" onchange="renderVotes()"><option value="all">All creators</option></select>
+        <select id="vote-filter-content" onchange="renderVotes()"><option value="all">All content</option></select>
       </div>
       <table>
         <thead><tr><th>Content</th><th>Creator</th><th>Voter name</th><th>Phone</th><th>Email</th><th>Cast</th><th>Actions</th></tr></thead>
@@ -173,10 +210,25 @@ tr:last-child td{ border-bottom:none; }
   </main>
 </div>
 
+<!-- Generic detail / edit modal, reused for users, posts, and opportunities -->
+<div class="modal-overlay" id="detail-modal-overlay">
+  <div class="modal-card wide" id="detail-modal-content"></div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="assets/supabase-client.js"></script>
 <script>
+const CATEGORIES = ["Singing","Poetry & Spoken Word","Comedy","Dance","Acting","Instrumentalists","Visual Art","Photography","Filmmaking","Writing","Fashion","DJs & Producers"];
 let adminProfile = null;
+
+function initials(name){ return (name||"?").split(" ").map(p=>p[0]).slice(0,2).join("").toUpperCase(); }
+function avatarHtml(profile, size){
+  const cls = "avatar-circle" + (size==="lg"? " avatar-lg":"") + " " + (profile.is_blocked ? "avatar-blocked" : "avatar-active");
+  return profile.avatar_url
+    ? `<span class="${cls}"><img src="${profile.avatar_url}" alt=""></span>`
+    : `<span class="${cls}">${initials(profile.full_name)}</span>`;
+}
+function closeDetailModal(){ document.getElementById("detail-modal-overlay").style.display = "none"; }
 
 async function handleAdminLogin(e){
   e.preventDefault();
@@ -184,15 +236,12 @@ async function handleAdminLogin(e){
   errEl.innerHTML = "";
   const email = document.getElementById("admin-email").value.trim().toLowerCase();
   const password = document.getElementById("admin-password").value;
-
   const { error: authErr } = await sb.auth.signInWithPassword({ email, password });
   if(authErr){ errEl.innerHTML = `<div class="form-error">${authErr.message}</div>`; return false; }
-
   const ok = await checkAdminAndEnter();
   if(!ok){ errEl.innerHTML = `<div class="form-error">This account isn't an admin.</div>`; await sb.auth.signOut(); }
   return false;
 }
-
 async function checkAdminAndEnter(){
   const { data: { session } } = await sb.auth.getSession();
   if(!session) return false;
@@ -204,11 +253,7 @@ async function checkAdminAndEnter(){
   loadOverview();
   return true;
 }
-
-async function adminLogout(){
-  await sb.auth.signOut();
-  window.location.reload();
-}
+async function adminLogout(){ await sb.auth.signOut(); window.location.reload(); }
 
 function switchTab(tab){
   document.querySelectorAll(".tab-btn").forEach(b=>b.classList.toggle("active", b.dataset.tab===tab));
@@ -222,39 +267,73 @@ function switchTab(tab){
 
 /* ---------------- Overview ---------------- */
 async function loadOverview(){
-  const [{ count: userCount }, { count: blockedCount }, { count: pendingCount }, { count: oppCount }, { count: voteCount }] = await Promise.all([
+  const [{ count: userCount }, { count: blockedCount }, { count: pendingCount }, { count: rejectedCount }, { count: oppCount }, { count: voteCount }] = await Promise.all([
     sb.from('profiles').select('*', { count:'exact', head:true }),
     sb.from('profiles').select('*', { count:'exact', head:true }).eq('is_blocked', true),
     sb.from('posts').select('*', { count:'exact', head:true }).eq('status','pending'),
+    sb.from('posts').select('*', { count:'exact', head:true }).eq('status','removed'),
     sb.from('opportunities').select('*', { count:'exact', head:true }).eq('status','open'),
     sb.from('votes').select('*', { count:'exact', head:true })
   ]);
   document.getElementById("overview-stats").innerHTML = `
-    <div class="stat-card"><div class="num">${userCount ?? 0}</div><div class="label">Total accounts</div></div>
-    <div class="stat-card"><div class="num">${blockedCount ?? 0}</div><div class="label">Blocked users</div></div>
-    <div class="stat-card"><div class="num">${pendingCount ?? 0}</div><div class="label">Posts pending review</div></div>
-    <div class="stat-card"><div class="num">${oppCount ?? 0}</div><div class="label">Open opportunities</div></div>
-    <div class="stat-card"><div class="num">${voteCount ?? 0}</div><div class="label">Total votes cast</div></div>
+    <div class="stat-card"><div class="num num-black">${userCount ?? 0}</div><div class="label">Total accounts</div></div>
+    <div class="stat-card"><div class="num num-red">${blockedCount ?? 0}</div><div class="label">Blocked users</div></div>
+    <div class="stat-card"><div class="num num-grey">${pendingCount ?? 0}</div><div class="label">Posts pending review</div></div>
+    <div class="stat-card"><div class="num num-red">${rejectedCount ?? 0}</div><div class="label">Rejected posts</div></div>
+    <div class="stat-card"><div class="num num-green">${oppCount ?? 0}</div><div class="label">Open opportunities</div></div>
+    <div class="stat-card"><div class="num num-green">${voteCount ?? 0}</div><div class="label">Total votes cast</div></div>
   `;
+  loadTopCreators();
+}
+async function loadTopCreators(){
+  const [{ data: votes }, { data: posts }, { data: profiles }] = await Promise.all([
+    sb.from('votes').select('target_post_id'),
+    sb.from('posts').select('id, profile_id'),
+    sb.from('profiles').select('id, full_name')
+  ]);
+  const postToProfile = {};
+  (posts||[]).forEach(p=>{ postToProfile[p.id] = p.profile_id; });
+  const nameById = {};
+  (profiles||[]).forEach(p=>{ nameById[p.id] = p.full_name; });
+  const tally = {};
+  (votes||[]).forEach(v=>{
+    const pid = postToProfile[v.target_post_id];
+    if(!pid) return;
+    tally[pid] = (tally[pid]||0) + 1;
+  });
+  const ranked = Object.entries(tally).map(([pid,count])=>({ name: nameById[pid]||"Unknown", count }))
+    .sort((a,b)=>b.count-a.count).slice(0,5);
+  document.getElementById("top-creators-list").innerHTML = ranked.length
+    ? ranked.map(r=>`<li><span>${r.name}</span><span class="tc-votes">${r.count} votes</span></li>`).join("")
+    : `<li class="muted">No votes yet.</li>`;
 }
 
 /* ---------------- Users ---------------- */
 let allUsersCache = [];
+function populateUserCategoryFilter(){
+  const sel = document.getElementById("user-filter-category");
+  if(sel.options.length <= 1){
+    CATEGORIES.forEach(cat=>{ const opt=document.createElement("option"); opt.value=cat; opt.textContent=cat; sel.appendChild(opt); });
+  }
+}
 async function renderUsers(){
+  populateUserCategoryFilter();
   if(!allUsersCache.length){
     const { data, error } = await sb.from('profiles').select('*').order('created_at',{ascending:false});
-    if(error){ document.getElementById("users-body").innerHTML = `<tr><td colspan="6" class="empty-state">${error.message}</td></tr>`; return; }
+    if(error){ document.getElementById("users-body").innerHTML = `<tr><td colspan="8" class="empty-state">${error.message}</td></tr>`; return; }
     allUsersCache = data || [];
   }
   const search = document.getElementById("user-search").value.trim().toLowerCase();
   const roleFilter = document.getElementById("user-filter-role").value;
   const statusFilter = document.getElementById("user-filter-status").value;
+  const categoryFilter = document.getElementById("user-filter-category").value;
 
   let list = allUsersCache.filter(u=>{
     const matchSearch = !search || (u.full_name||"").toLowerCase().includes(search) || (u.email||"").toLowerCase().includes(search);
     const matchRole = roleFilter==="all" || u.role===roleFilter;
     const matchStatus = statusFilter==="all" || (statusFilter==="blocked" ? u.is_blocked : !u.is_blocked);
-    return matchSearch && matchRole && matchStatus;
+    const matchCategory = categoryFilter==="all" || u.category===categoryFilter;
+    return matchSearch && matchRole && matchStatus && matchCategory;
   });
 
   const typeLabel = { user:"Creator", organizer:"Brand", admin:"Admin" };
@@ -264,27 +343,28 @@ async function renderUsers(){
       : u.role === 'user'
         ? `${u.university||"—"}${u.year_of_study? ' · '+u.year_of_study:''}`
         : "—";
+    const canModerate = u.role !== 'admin';
     return `
-    <tr>
+    <tr class="clickable" onclick="openUserDetail('${u.id}')">
+      <td onclick="event.stopPropagation()">${avatarHtml(u)}</td>
       <td>${u.full_name||""}</td>
       <td>${u.email||"<em>no login</em>"}<br><span class="muted" style="font-size:.78rem;">${u.phone||""}</span></td>
       <td><span class="badge badge-${u.role}">${typeLabel[u.role]||u.role}</span></td>
       <td>${details}${u.city? ' · '+u.city:''}</td>
       <td><span class="badge ${u.is_blocked?'badge-blocked':'badge-active'}">${u.is_blocked?'Blocked':'Active'}</span></td>
       <td>${new Date(u.created_at).toLocaleDateString()}</td>
-      <td class="row-actions">
-        ${u.is_blocked
+      <td class="row-actions" onclick="event.stopPropagation()">
+        ${canModerate ? (u.is_blocked
           ? `<button class="btn btn-outline btn-sm" onclick="unblockUser('${u.id}')">Unblock</button>`
-          : `<button class="btn btn-outline btn-sm" onclick="blockUser('${u.id}')">Block</button>`}
-        ${u.role!=='admin'
-          ? `<button class="btn btn-outline btn-sm" onclick="makeAdmin('${u.id}')">Make admin</button>`
-          : ``}
-        <button class="btn btn-danger btn-sm" onclick="deleteUser('${u.id}')">Delete</button>
+          : `<button class="btn btn-outline btn-sm" onclick="blockUser('${u.id}')">Block</button>`) : `<span class="muted" style="font-size:.78rem;">Protected</span>`}
+        ${canModerate ? `<button class="btn btn-danger btn-sm" onclick="deleteUser('${u.id}')">Delete</button>` : ``}
       </td>
     </tr>
-  `;}).join("") : `<tr><td colspan="7" class="empty-state">No users match.</td></tr>`;
+  `;}).join("") : `<tr><td colspan="8" class="empty-state">No users match.</td></tr>`;
 }
 async function blockUser(id){
+  const u = allUsersCache.find(x=>x.id===id);
+  if(u && u.role==='admin'){ alert("Admin accounts can't be blocked."); return; }
   const { error } = await sb.from('profiles').update({ is_blocked:true }).eq('id', id);
   if(error){ alert(error.message); return; }
   allUsersCache = []; renderUsers(); loadOverview();
@@ -294,37 +374,61 @@ async function unblockUser(id){
   if(error){ alert(error.message); return; }
   allUsersCache = []; renderUsers(); loadOverview();
 }
-async function makeAdmin(id){
-  if(!confirm("Give this account admin access to the dashboard?")) return;
-  const { error } = await sb.from('profiles').update({ role:'admin' }).eq('id', id);
-  if(error){ alert(error.message); return; }
-  allUsersCache = []; renderUsers();
-}
 async function deleteUser(id){
-  if(!confirm("Delete this user's profile, posts and votes permanently? This cannot be undone.\n\nNote: this removes their OpenMic data. If they signed up with email/Google, their login account itself is removed separately — see the README's optional admin-delete-user function.")) return;
+  const u = allUsersCache.find(x=>x.id===id);
+  if(u && u.role==='admin'){ alert("Admin accounts can't be deleted from here."); return; }
+  if(!confirm("Delete this user's profile, posts and votes permanently? This cannot be undone.\n\nNote: this removes their OpenMic data, not their login itself — see the README's optional admin-delete-user function for fully removing the account.")) return;
   const { error } = await sb.from('profiles').delete().eq('id', id);
   if(error){ alert(error.message); return; }
   allUsersCache = []; renderUsers(); loadOverview();
+  closeDetailModal();
+}
+function openUserDetail(id){
+  const u = allUsersCache.find(x=>x.id===id);
+  if(!u) return;
+  const typeLabel = { user:"Creator", organizer:"Brand", admin:"Admin" };
+  const roleSpecific = u.role === 'organizer' ? `
+    <div class="detail-row"><span class="k">Brand name</span><span class="v">${u.brand_name||"—"}</span></div>
+    <div class="detail-row"><span class="k">Industry</span><span class="v">${u.industry||"—"}</span></div>
+    <div class="detail-row"><span class="k">Business email</span><span class="v">${u.business_email||"—"}</span></div>
+  ` : u.role === 'user' ? `
+    <div class="detail-row"><span class="k">University</span><span class="v">${u.university||"—"}</span></div>
+    <div class="detail-row"><span class="k">Year of study</span><span class="v">${u.year_of_study||"—"}</span></div>
+    <div class="detail-row"><span class="k">Creative category</span><span class="v">${u.category||"—"}</span></div>
+  ` : "";
+  document.getElementById("detail-modal-content").innerHTML = `
+    <button class="modal-close" onclick="closeDetailModal()">&times;</button>
+    <div class="detail-header">${avatarHtml(u,"lg")}<div><h2 style="margin-bottom:2px;">${u.full_name}</h2><span class="badge badge-${u.role}">${typeLabel[u.role]||u.role}</span> <span class="badge ${u.is_blocked?'badge-blocked':'badge-active'}">${u.is_blocked?'Blocked':'Active'}</span></div></div>
+    <div class="detail-row"><span class="k">Email</span><span class="v">${u.email||"—"}</span></div>
+    <div class="detail-row"><span class="k">Phone</span><span class="v">${u.phone||"—"}</span></div>
+    <div class="detail-row"><span class="k">City</span><span class="v">${u.city||"—"}</span></div>
+    ${roleSpecific}
+    <div class="detail-row"><span class="k">Bio</span><span class="v">${u.bio||"—"}</span></div>
+    <div class="detail-row"><span class="k">Joined</span><span class="v">${new Date(u.created_at).toLocaleString()}</span></div>
+  `;
+  document.getElementById("detail-modal-overlay").style.display = "flex";
 }
 
 /* ---------------- Posts ---------------- */
+let allPostsCache = [];
 async function renderPosts(){
   const statusFilter = document.getElementById("post-filter-status").value;
-  let query = sb.from('posts').select('*, profiles(full_name)').order('created_at',{ascending:false});
+  let query = sb.from('posts').select('*, profiles(*)').order('created_at',{ascending:false});
   if(statusFilter !== "all") query = query.eq('status', statusFilter);
   const { data, error } = await query;
   if(error){ document.getElementById("posts-body").innerHTML = `<tr><td colspan="6" class="empty-state">${error.message}</td></tr>`; return; }
+  allPostsCache = data || [];
 
-  document.getElementById("posts-body").innerHTML = (data&&data.length) ? data.map(p=>`
-    <tr>
+  document.getElementById("posts-body").innerHTML = allPostsCache.length ? allPostsCache.map(p=>`
+    <tr class="clickable" onclick="openPostDetail('${p.id}')">
       <td>${p.title}</td>
-      <td>${p.profiles ? p.profiles.full_name : ""}</td>
+      <td onclick="event.stopPropagation()">${p.profiles ? p.profiles.full_name : ""}</td>
       <td>${p.category||""}</td>
-      <td><span class="badge badge-${p.status}">${p.status}</span></td>
+      <td><span class="badge badge-${p.status}">${p.status==='removed'?'rejected':p.status}</span></td>
       <td>${new Date(p.created_at).toLocaleDateString()}</td>
-      <td class="row-actions">
+      <td class="row-actions" onclick="event.stopPropagation()">
         ${p.status!=='published' ? `<button class="btn btn-outline btn-sm" onclick="setPostStatus('${p.id}','published')">Publish</button>` : ``}
-        ${p.status!=='removed' ? `<button class="btn btn-outline btn-sm" onclick="setPostStatus('${p.id}','removed')">Remove</button>` : ``}
+        ${p.status!=='removed' ? `<button class="btn btn-outline btn-sm" onclick="setPostStatus('${p.id}','removed')">Reject</button>` : ``}
         <button class="btn btn-danger btn-sm" onclick="deletePost('${p.id}')">Delete</button>
       </td>
     </tr>
@@ -340,13 +444,42 @@ async function deletePost(id){
   const { error } = await sb.from('posts').delete().eq('id', id);
   if(error){ alert(error.message); return; }
   renderPosts();
+  closeDetailModal();
+}
+function mediaPreviewHtml(url){
+  if(!url) return `<p class="muted">No media file uploaded for this piece.</p>`;
+  const ext = url.split('.').pop().split('?')[0].toLowerCase();
+  const videoExts = ['mp4','webm','mov','m4v'];
+  if(videoExts.includes(ext)) return `<video class="media-preview" src="${url}" controls></video>`;
+  return `<img class="media-preview" src="${url}" alt="">`;
+}
+function openPostDetail(id){
+  const p = allPostsCache.find(x=>x.id===id);
+  if(!p) return;
+  const u = p.profiles || {};
+  document.getElementById("detail-modal-content").innerHTML = `
+    <button class="modal-close" onclick="closeDetailModal()">&times;</button>
+    <h2>${p.title}</h2>
+    <span class="badge badge-${p.status}">${p.status==='removed'?'rejected':p.status}</span>
+    ${mediaPreviewHtml(p.media_url)}
+    <div class="detail-row"><span class="k">Category</span><span class="v">${p.category||"—"}</span></div>
+    <div class="detail-row"><span class="k">Submitted</span><span class="v">${new Date(p.created_at).toLocaleString()}</span></div>
+    <h3 style="margin-top:18px;font-size:.95rem;">Uploaded by</h3>
+    <div class="detail-header">${avatarHtml(u)}<div><strong>${u.full_name||"Unknown"}</strong><br><span class="muted" style="font-size:.82rem;">${u.email||""}</span></div></div>
+    <div class="detail-row"><span class="k">Phone</span><span class="v">${u.phone||"—"}</span></div>
+    <div class="detail-row"><span class="k">University</span><span class="v">${u.university||"—"}</span></div>
+    <div class="detail-row"><span class="k">City</span><span class="v">${u.city||"—"}</span></div>
+  `;
+  document.getElementById("detail-modal-overlay").style.display = "flex";
 }
 
 /* ---------------- Opportunities ---------------- */
+let allOppsCache = [];
 async function renderOpportunities(){
   const { data, error } = await sb.from('opportunities').select('*').order('created_at',{ascending:false});
   if(error){ document.getElementById("opportunities-body").innerHTML = `<tr><td colspan="6" class="empty-state">${error.message}</td></tr>`; return; }
-  document.getElementById("opportunities-body").innerHTML = (data&&data.length) ? data.map(o=>`
+  allOppsCache = data || [];
+  document.getElementById("opportunities-body").innerHTML = allOppsCache.length ? allOppsCache.map(o=>`
     <tr>
       <td>${o.title}</td>
       <td>${o.org_name}</td>
@@ -354,6 +487,7 @@ async function renderOpportunities(){
       <td><span class="badge ${o.status==='open'?'badge-active':'badge-removed'}">${o.status}</span></td>
       <td>${new Date(o.created_at).toLocaleDateString()}</td>
       <td class="row-actions">
+        <button class="btn btn-outline btn-sm" onclick="openOpportunityEdit('${o.id}')">Edit</button>
         ${o.status==='open'
           ? `<button class="btn btn-outline btn-sm" onclick="setOppStatus('${o.id}','closed')">Close</button>`
           : `<button class="btn btn-outline btn-sm" onclick="setOppStatus('${o.id}','open')">Reopen</button>`}
@@ -373,24 +507,90 @@ async function deleteOpp(id){
   if(error){ alert(error.message); return; }
   renderOpportunities();
 }
+function openOpportunityEdit(id){
+  const o = allOppsCache.find(x=>x.id===id);
+  if(!o) return;
+  document.getElementById("detail-modal-content").innerHTML = `
+    <button class="modal-close" onclick="closeDetailModal()">&times;</button>
+    <h2>Edit opportunity</h2>
+    <div id="opp-edit-error"></div>
+    <div class="form-row"><label>Title</label><input type="text" id="oe-title" value="${o.title.replace(/"/g,'&quot;')}"></div>
+    <div class="form-row"><label>Organization</label><input type="text" id="oe-org" value="${o.org_name.replace(/"/g,'&quot;')}"></div>
+    <div class="form-row"><label>Category</label>
+      <select id="oe-category">${CATEGORIES.map(c=>`<option ${c===o.category?'selected':''}>${c}</option>`).join("")}</select>
+    </div>
+    <div class="form-row"><label>Location</label><input type="text" id="oe-location" value="${(o.location||'').replace(/"/g,'&quot;')}"></div>
+    <div class="form-row"><label>Pay</label>
+      <select id="oe-pay">
+        ${["Paid","Unpaid","Stipend"].map(p=>`<option ${p===o.pay?'selected':''}>${p}</option>`).join("")}
+      </select>
+    </div>
+    <div class="form-row"><label>Status</label>
+      <select id="oe-status">
+        <option value="open" ${o.status==='open'?'selected':''}>Open</option>
+        <option value="closed" ${o.status==='closed'?'selected':''}>Closed</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" onclick="saveOpportunityEdit('${o.id}')">Save changes</button>
+  `;
+  document.getElementById("detail-modal-overlay").style.display = "flex";
+}
+async function saveOpportunityEdit(id){
+  const updates = {
+    title: document.getElementById("oe-title").value.trim(),
+    org_name: document.getElementById("oe-org").value.trim(),
+    category: document.getElementById("oe-category").value,
+    location: document.getElementById("oe-location").value.trim(),
+    pay: document.getElementById("oe-pay").value,
+    status: document.getElementById("oe-status").value
+  };
+  const { error } = await sb.from('opportunities').update(updates).eq('id', id);
+  if(error){ document.getElementById("opp-edit-error").innerHTML = `<div class="form-error">${error.message}</div>`; return; }
+  closeDetailModal();
+  renderOpportunities(); loadOverview();
+}
 
 /* ---------------- Votes ---------------- */
 let allVotesCache = [];
+function populateVoteFilters(){
+  const categories = new Set(), creators = new Set(), contents = new Set();
+  allVotesCache.forEach(v=>{
+    if(v.posts?.category) categories.add(v.posts.category);
+    if(v.posts?.profiles?.full_name) creators.add(v.posts.profiles.full_name);
+    if(v.posts?.title) contents.add(v.posts.title);
+  });
+  const fill = (id, values) => {
+    const sel = document.getElementById(id);
+    const current = sel.value;
+    sel.innerHTML = `<option value="all">${sel.dataset.allLabel}</option>` + [...values].sort().map(v=>`<option ${v===current?'selected':''}>${v}</option>`).join("");
+  };
+  document.getElementById("vote-filter-category").dataset.allLabel = "All categories";
+  document.getElementById("vote-filter-creator").dataset.allLabel = "All creators";
+  document.getElementById("vote-filter-content").dataset.allLabel = "All content";
+  fill("vote-filter-category", categories);
+  fill("vote-filter-creator", creators);
+  fill("vote-filter-content", contents);
+}
 async function renderVotes(){
   if(!allVotesCache.length){
     const { data, error } = await sb.from('votes')
-      .select('*, posts(title, profiles(full_name))')
+      .select('*, posts(title, category, profiles(full_name))')
       .order('created_at',{ascending:false});
     if(error){ document.getElementById("votes-body").innerHTML = `<tr><td colspan="7" class="empty-state">${error.message}</td></tr>`; return; }
     allVotesCache = data || [];
+    populateVoteFilters();
   }
   const search = document.getElementById("vote-search").value.trim().toLowerCase();
+  const catFilter = document.getElementById("vote-filter-category").value;
+  const creatorFilter = document.getElementById("vote-filter-creator").value;
+  const contentFilter = document.getElementById("vote-filter-content").value;
+
   const list = allVotesCache.filter(v=>{
-    if(!search) return true;
-    return (v.voter_name||"").toLowerCase().includes(search)
-      || (v.voter_phone||"").toLowerCase().includes(search)
-      || (v.voter_email||"").toLowerCase().includes(search)
-      || (v.posts?.title||"").toLowerCase().includes(search);
+    const matchSearch = !search || (v.voter_name||"").toLowerCase().includes(search) || (v.voter_phone||"").toLowerCase().includes(search) || (v.voter_email||"").toLowerCase().includes(search);
+    const matchCat = catFilter==="all" || v.posts?.category===catFilter;
+    const matchCreator = creatorFilter==="all" || v.posts?.profiles?.full_name===creatorFilter;
+    const matchContent = contentFilter==="all" || v.posts?.title===contentFilter;
+    return matchSearch && matchCat && matchCreator && matchContent;
   });
   document.getElementById("votes-body").innerHTML = list.length ? list.map(v=>`
     <tr>
