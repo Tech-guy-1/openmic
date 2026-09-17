@@ -3,22 +3,22 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>OpenMic — Admin</title>
+<title>OpenMic: Admin</title>
 <link rel="icon" type="image/png" href="assets/favicon.png">
 <link rel="apple-touch-icon" href="assets/favicon.png">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 :root{
   --ink:#15132A; --ink-2:#211D3D; --ink-soft:#57517E;
   --paper:#FBF8F1; --paper-2:#F1ECDD; --line:#E3DDCB; --line-on-ink:#38335C;
   --gold:#F2B705; --gold-ink:#4A3900; --coral:#FF5B4C; --white:#FFFFFF;
   --green:#1E6B3C; --red:#B23A2E; --grey:#6B6685;
-  --font-display:'Fraunces',serif; --font-body:'IBM Plex Sans',system-ui,sans-serif;
+  --font-display:'Inter',system-ui,sans-serif; --font-body:'Inter',system-ui,sans-serif;
   --radius-sm:3px; --radius-md:6px;
 }
 *,*::before,*::after{ box-sizing:border-box; }
 body{ margin:0; font-family:var(--font-body); color:var(--ink); background:var(--paper); }
-h1,h2,h3{ font-family:var(--font-display); margin:0 0 .3em; font-weight:600; }
+h1,h2,h3{ font-family:var(--font-display); margin:0 0 .3em; font-weight:700; letter-spacing:-0.01em; }
 p{ margin:0 0 1em; color:var(--ink-soft); }
 button{ font-family:inherit; cursor:pointer; }
 :focus-visible{ outline:3px solid var(--gold); outline-offset:2px; }
@@ -30,6 +30,8 @@ button{ font-family:inherit; cursor:pointer; }
 .btn-outline:hover{ background:var(--ink); color:var(--white); }
 .btn-danger{ background:var(--red); color:var(--white); }
 .btn-danger:hover{ background:#8f2d23; }
+.btn-ghost{ background:transparent; color:var(--ink); border-color:var(--line); }
+.btn-ghost:hover{ border-color:var(--ink); }
 .btn-sm{ padding:5px 10px; font-size:.78rem; }
 .btn[disabled]{ opacity:.5; cursor:not-allowed; }
 
@@ -42,9 +44,12 @@ button{ font-family:inherit; cursor:pointer; }
 .form-note{ background:var(--paper-2); border-radius:var(--radius-sm); padding:9px 11px; font-size:.78rem; color:var(--ink-soft); margin-top:14px; }
 .muted{ color:var(--ink-soft); }
 
-.dash{ display:none; min-height:100vh; }
+.dash{ display:none; min-height:100vh; position:relative; }
 .dash.active{ display:flex; }
-.sidebar{ width:220px; flex-shrink:0; background:var(--ink); color:#C9C4E8; padding:22px 16px; }
+#sidebar-toggle{ position:fixed; top:16px; left:16px; z-index:50; width:38px; height:38px; border-radius:var(--radius-sm); border:none; background:var(--ink); color:var(--white); font-size:1.1rem; display:flex; align-items:center; justify-content:center; }
+.sidebar{ width:220px; flex-shrink:0; background:var(--ink); color:#C9C4E8; padding:22px 16px; padding-top:60px; transition:width .18s ease, padding .18s ease; overflow:hidden; white-space:nowrap; }
+.sidebar.collapsed{ width:0; padding-left:0; padding-right:0; }
+.sidebar-nav{ display:flex; flex-direction:column; }
 .sidebar h2{ padding:0 6px 18px; }
 .sidebar-logo{ height:38px; width:auto; max-width:200px; object-fit:contain; }
 .sidebar button.tab-btn, .sidebar button.logout, .sidebar>button{ display:block; width:100%; text-align:left; background:none; border:none; color:#C9C4E8; padding:10px 8px; border-radius:var(--radius-sm); font-size:.88rem; margin-bottom:2px; }
@@ -96,6 +101,18 @@ tr.clickable:hover{ background:var(--paper-2); }
 .modal-overlay{ position:fixed; inset:0; background:rgba(21,19,42,.65); z-index:100; display:none; align-items:center; justify-content:center; padding:20px; }
 .modal-card{ background:var(--white); border-radius:var(--radius-md); padding:28px 26px; width:100%; max-width:520px; max-height:88vh; overflow-y:auto; }
 .modal-card.wide{ max-width:640px; }
+.password-field{ position:relative; }
+.password-field input{ padding-right:42px; }
+.password-toggle{ position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; color:var(--ink-soft); font-size:.78rem; font-weight:600; padding:4px 6px; }
+.password-toggle:hover{ color:var(--ink); }
+#confirm-modal-overlay .modal-card{ max-width:380px; text-align:center; }
+#confirm-modal-overlay .modal-actions{ display:flex; gap:10px; justify-content:center; margin-top:20px; }
+@media print{
+  .sidebar, #sidebar-toggle, .toolbar, .btn, .row-actions{ display:none !important; }
+  body{ background:#fff; color:#000; }
+  .dash{ display:block !important; }
+  .main{ padding:0; }
+}
 .modal-close{ float:right; background:none; border:none; font-size:1.3rem; cursor:pointer; color:var(--ink-soft); line-height:1; }
 .detail-row{ display:flex; justify-content:space-between; gap:12px; padding:8px 0; border-bottom:1px dashed var(--line); font-size:.88rem; }
 .detail-row:last-child{ border-bottom:none; }
@@ -112,10 +129,12 @@ tr.clickable:hover{ background:var(--paper-2); }
   <div class="auth-card">
     <h1>Admin portal</h1>
     <p>Restricted to OpenMic staff accounts.</p>
-    <div id="admin-error"></div>
-    <form onsubmit="return handleAdminLogin(event)">
-      <div class="form-row"><label for="admin-email">Email</label><input type="email" id="admin-email" required></div>
-      <div class="form-row"><label for="admin-password">Password</label><input type="password" id="admin-password" required></div>
+    <div id="admin-error" role="alert" aria-live="assertive"></div>
+    <form onsubmit="return handleAdminLogin(event)" autocomplete="off">
+      <div class="form-row"><label for="admin-email">Email</label><input type="email" id="admin-email" name="admin-portal-email" autocomplete="off" required></div>
+      <div class="form-row"><label for="admin-password">Password</label>
+        <div class="password-field"><input type="password" id="admin-password" name="admin-portal-password" autocomplete="new-password" required><button type="button" class="password-toggle" onclick="togglePasswordVisibility('admin-password',this)">Show</button></div>
+      </div>
       <button class="btn btn-primary" type="submit" style="width:100%;justify-content:center;">Log in</button>
     </form>
   </div>
@@ -123,13 +142,16 @@ tr.clickable:hover{ background:var(--paper-2); }
 
 <!-- ===================== DASHBOARD ===================== -->
 <div class="dash" id="dashboard">
-  <aside class="sidebar">
+  <button id="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle menu" aria-expanded="true" aria-controls="dashboard-sidebar">☰</button>
+  <aside class="sidebar" id="dashboard-sidebar">
     <h2><img class="sidebar-logo" src="assets/logo.png" alt="Brand logo" onerror="this.style.display='none'"></h2>
+    <nav class="sidebar-nav" aria-label="Admin sections">
     <button class="tab-btn active" data-tab="overview" onclick="switchTab('overview')">Overview</button>
     <button class="tab-btn" data-tab="users" onclick="switchTab('users')">Users</button>
     <button class="tab-btn" data-tab="posts" onclick="switchTab('posts')">Posts</button>
     <button class="tab-btn" data-tab="opportunities" onclick="switchTab('opportunities')">Opportunities</button>
     <button class="tab-btn" data-tab="votes" onclick="switchTab('votes')">Votes</button>
+    </nav>
     <button class="logout" onclick="adminLogout()">Log out</button>
     <button onclick="window.location.href='index.html'" style="margin-top:4px;">← Back to site</button>
   </aside>
@@ -202,8 +224,8 @@ tr.clickable:hover{ background:var(--paper-2); }
         <select id="vote-filter-content" onchange="renderVotes()"><option value="all">All content</option></select>
       </div>
       <table>
-        <thead><tr><th>Content</th><th>Creator</th><th>Voter name</th><th>Phone</th><th>Email</th><th>Cast</th><th>Actions</th></tr></thead>
-        <tbody id="votes-body"><tr><td colspan="7" class="empty-state">Loading…</td></tr></tbody>
+        <thead><tr><th>Content</th><th>Creator</th><th>Voter name</th><th>Phone</th><th>Email</th><th>Device</th><th>Cast</th><th>Actions</th></tr></thead>
+        <tbody id="votes-body"><tr><td colspan="8" class="empty-state">Loading…</td></tr></tbody>
       </table>
     </div>
 
@@ -213,6 +235,18 @@ tr.clickable:hover{ background:var(--paper-2); }
 <!-- Generic detail / edit modal, reused for users, posts, and opportunities -->
 <div class="modal-overlay" id="detail-modal-overlay">
   <div class="modal-card wide" id="detail-modal-content"></div>
+</div>
+
+<!-- Generic confirm modal, replaces native browser confirm() for destructive actions -->
+<div class="modal-overlay" id="confirm-modal-overlay">
+  <div class="modal-card">
+    <h3 id="confirm-modal-title">Are you sure?</h3>
+    <p id="confirm-modal-message"></p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeConfirmModal()">Cancel</button>
+      <button class="btn btn-danger" id="confirm-modal-confirm-btn">Confirm</button>
+    </div>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -229,6 +263,38 @@ function avatarHtml(profile, size){
     : `<span class="${cls}">${initials(profile.full_name)}</span>`;
 }
 function closeDetailModal(){ document.getElementById("detail-modal-overlay").style.display = "none"; }
+
+/* ---------------- Confirm modal (replaces native confirm() for destructive actions) ---------------- */
+let pendingConfirmAction = null;
+function askConfirm(message, onConfirm, title){
+  document.getElementById("confirm-modal-title").textContent = title || "Are you sure?";
+  document.getElementById("confirm-modal-message").textContent = message;
+  pendingConfirmAction = onConfirm;
+  document.getElementById("confirm-modal-overlay").style.display = "flex";
+}
+function closeConfirmModal(){
+  document.getElementById("confirm-modal-overlay").style.display = "none";
+  pendingConfirmAction = null;
+}
+document.getElementById("confirm-modal-confirm-btn").addEventListener("click", ()=>{
+  const action = pendingConfirmAction;
+  closeConfirmModal();
+  if(action) action();
+});
+
+/* ---------------- Password visibility toggle ---------------- */
+function togglePasswordVisibility(inputId, btn){
+  const input = document.getElementById(inputId);
+  const showing = input.type === "text";
+  input.type = showing ? "password" : "text";
+  btn.textContent = showing ? "Show" : "Hide";
+}
+function toggleSidebar(){
+  const sidebar = document.getElementById("dashboard-sidebar");
+  const btn = document.getElementById("sidebar-toggle");
+  const collapsed = sidebar.classList.toggle("collapsed");
+  btn.setAttribute("aria-expanded", collapsed ? "false" : "true");
+}
 
 async function handleAdminLogin(e){
   e.preventDefault();
@@ -267,6 +333,7 @@ function switchTab(tab){
 
 /* ---------------- Overview ---------------- */
 async function loadOverview(){
+  await sb.rpc('purge_old_rejected_posts');
   const [{ count: userCount }, { count: blockedCount }, { count: pendingCount }, { count: rejectedCount }, { count: oppCount }, { count: voteCount }] = await Promise.all([
     sb.from('profiles').select('*', { count:'exact', head:true }),
     sb.from('profiles').select('*', { count:'exact', head:true }).eq('is_blocked', true),
@@ -377,11 +444,16 @@ async function unblockUser(id){
 async function deleteUser(id){
   const u = allUsersCache.find(x=>x.id===id);
   if(u && u.role==='admin'){ alert("Admin accounts can't be deleted from here."); return; }
-  if(!confirm("Delete this user's profile, posts and votes permanently? This cannot be undone.\n\nNote: this removes their OpenMic data, not their login itself — see the README's optional admin-delete-user function for fully removing the account.")) return;
-  const { error } = await sb.from('profiles').delete().eq('id', id);
-  if(error){ alert(error.message); return; }
-  allUsersCache = []; renderUsers(); loadOverview();
-  closeDetailModal();
+  askConfirm(
+    "This removes their OpenMic data (profile, posts, votes) permanently. It doesn't remove their login itself, see the README's optional admin-delete-user function for that.",
+    async ()=>{
+      const { error } = await sb.from('profiles').delete().eq('id', id);
+      if(error){ alert(error.message); return; }
+      allUsersCache = []; renderUsers(); loadOverview();
+      closeDetailModal();
+    },
+    "Delete this user?"
+  );
 }
 function openUserDetail(id){
   const u = allUsersCache.find(x=>x.id===id);
@@ -411,7 +483,14 @@ function openUserDetail(id){
 
 /* ---------------- Posts ---------------- */
 let allPostsCache = [];
+function daysLeftLabel(rejectedAt){
+  if(!rejectedAt) return "";
+  const purgeAt = new Date(rejectedAt).getTime() + 7*24*60*60*1000;
+  const daysLeft = Math.max(0, Math.ceil((purgeAt - Date.now()) / (24*60*60*1000)));
+  return `<div class="muted" style="font-size:.75rem;margin-top:2px;">auto-deletes in ${daysLeft} day${daysLeft===1?'':'s'}</div>`;
+}
 async function renderPosts(){
+  await sb.rpc('purge_old_rejected_posts'); // opportunistic cleanup, see schema.sql for the real 7-day scheduled version
   const statusFilter = document.getElementById("post-filter-status").value;
   let query = sb.from('posts').select('*, profiles(*)').order('created_at',{ascending:false});
   if(statusFilter !== "all") query = query.eq('status', statusFilter);
@@ -424,12 +503,11 @@ async function renderPosts(){
       <td>${p.title}</td>
       <td onclick="event.stopPropagation()">${p.profiles ? p.profiles.full_name : ""}</td>
       <td>${p.category||""}</td>
-      <td><span class="badge badge-${p.status}">${p.status==='removed'?'rejected':p.status}</span></td>
+      <td><span class="badge badge-${p.status}">${p.status==='removed'?'rejected':p.status}</span>${p.status==='removed'?daysLeftLabel(p.rejected_at):''}</td>
       <td>${new Date(p.created_at).toLocaleDateString()}</td>
       <td class="row-actions" onclick="event.stopPropagation()">
         ${p.status!=='published' ? `<button class="btn btn-outline btn-sm" onclick="setPostStatus('${p.id}','published')">Publish</button>` : ``}
         ${p.status!=='removed' ? `<button class="btn btn-outline btn-sm" onclick="setPostStatus('${p.id}','removed')">Reject</button>` : ``}
-        <button class="btn btn-danger btn-sm" onclick="deletePost('${p.id}')">Delete</button>
       </td>
     </tr>
   `).join("") : `<tr><td colspan="6" class="empty-state">No posts.</td></tr>`;
@@ -438,13 +516,6 @@ async function setPostStatus(id, status){
   const { error } = await sb.from('posts').update({ status }).eq('id', id);
   if(error){ alert(error.message); return; }
   renderPosts(); loadOverview();
-}
-async function deletePost(id){
-  if(!confirm("Delete this post permanently?")) return;
-  const { error } = await sb.from('posts').delete().eq('id', id);
-  if(error){ alert(error.message); return; }
-  renderPosts();
-  closeDetailModal();
 }
 function mediaPreviewHtml(url){
   if(!url) return `<p class="muted">No media file uploaded for this piece.</p>`;
@@ -461,6 +532,7 @@ function openPostDetail(id){
     <button class="modal-close" onclick="closeDetailModal()">&times;</button>
     <h2>${p.title}</h2>
     <span class="badge badge-${p.status}">${p.status==='removed'?'rejected':p.status}</span>
+    ${p.status==='removed' ? daysLeftLabel(p.rejected_at) : ''}
     ${mediaPreviewHtml(p.media_url)}
     <div class="detail-row"><span class="k">Category</span><span class="v">${p.category||"—"}</span></div>
     <div class="detail-row"><span class="k">Submitted</span><span class="v">${new Date(p.created_at).toLocaleString()}</span></div>
@@ -469,6 +541,7 @@ function openPostDetail(id){
     <div class="detail-row"><span class="k">Phone</span><span class="v">${u.phone||"—"}</span></div>
     <div class="detail-row"><span class="k">University</span><span class="v">${u.university||"—"}</span></div>
     <div class="detail-row"><span class="k">City</span><span class="v">${u.city||"—"}</span></div>
+    ${p.status!=='published' ? `<button class="btn btn-outline btn-sm" style="margin-top:14px;" onclick="setPostStatus('${p.id}','published');closeDetailModal();">Publish</button>` : `<button class="btn btn-outline btn-sm" style="margin-top:14px;" onclick="setPostStatus('${p.id}','removed');closeDetailModal();">Reject</button>`}
   `;
   document.getElementById("detail-modal-overlay").style.display = "flex";
 }
@@ -501,11 +574,12 @@ async function setOppStatus(id, status){
   if(error){ alert(error.message); return; }
   renderOpportunities(); loadOverview();
 }
-async function deleteOpp(id){
-  if(!confirm("Delete this opportunity permanently?")) return;
-  const { error } = await sb.from('opportunities').delete().eq('id', id);
-  if(error){ alert(error.message); return; }
-  renderOpportunities();
+function deleteOpp(id){
+  askConfirm("This can't be undone.", async ()=>{
+    const { error } = await sb.from('opportunities').delete().eq('id', id);
+    if(error){ alert(error.message); return; }
+    renderOpportunities();
+  }, "Delete this opportunity?");
 }
 function openOpportunityEdit(id){
   const o = allOppsCache.find(x=>x.id===id);
@@ -513,7 +587,7 @@ function openOpportunityEdit(id){
   document.getElementById("detail-modal-content").innerHTML = `
     <button class="modal-close" onclick="closeDetailModal()">&times;</button>
     <h2>Edit opportunity</h2>
-    <div id="opp-edit-error"></div>
+    <div id="opp-edit-error" role="alert" aria-live="assertive"></div>
     <div class="form-row"><label>Title</label><input type="text" id="oe-title" value="${o.title.replace(/"/g,'&quot;')}"></div>
     <div class="form-row"><label>Organization</label><input type="text" id="oe-org" value="${o.org_name.replace(/"/g,'&quot;')}"></div>
     <div class="form-row"><label>Category</label>
@@ -576,7 +650,7 @@ async function renderVotes(){
     const { data, error } = await sb.from('votes')
       .select('*, posts(title, category, profiles(full_name))')
       .order('created_at',{ascending:false});
-    if(error){ document.getElementById("votes-body").innerHTML = `<tr><td colspan="7" class="empty-state">${error.message}</td></tr>`; return; }
+    if(error){ document.getElementById("votes-body").innerHTML = `<tr><td colspan="8" class="empty-state">${error.message}</td></tr>`; return; }
     allVotesCache = data || [];
     populateVoteFilters();
   }
@@ -586,7 +660,7 @@ async function renderVotes(){
   const contentFilter = document.getElementById("vote-filter-content").value;
 
   const list = allVotesCache.filter(v=>{
-    const matchSearch = !search || (v.voter_name||"").toLowerCase().includes(search) || (v.voter_phone||"").toLowerCase().includes(search) || (v.voter_email||"").toLowerCase().includes(search);
+    const matchSearch = !search || (v.voter_name||"").toLowerCase().includes(search) || (v.voter_phone||"").toLowerCase().includes(search) || (v.voter_email||"").toLowerCase().includes(search) || (v.device_hash||"").toLowerCase().includes(search);
     const matchCat = catFilter==="all" || v.posts?.category===catFilter;
     const matchCreator = creatorFilter==="all" || v.posts?.profiles?.full_name===creatorFilter;
     const matchContent = contentFilter==="all" || v.posts?.title===contentFilter;
@@ -599,16 +673,18 @@ async function renderVotes(){
       <td>${v.voter_name}</td>
       <td>${v.voter_phone}</td>
       <td>${v.voter_email||"—"}</td>
+      <td><code style="font-size:.72rem;" title="${v.device_hash||''}">${v.device_hash ? v.device_hash.slice(0,10) : "—"}</code></td>
       <td>${new Date(v.created_at).toLocaleString()}</td>
       <td class="row-actions"><button class="btn btn-danger btn-sm" onclick="deleteVote('${v.id}')">Delete</button></td>
     </tr>
-  `).join("") : `<tr><td colspan="7" class="empty-state">No votes match.</td></tr>`;
+  `).join("") : `<tr><td colspan="8" class="empty-state">No votes match.</td></tr>`;
 }
-async function deleteVote(id){
-  if(!confirm("Delete this vote? The voter will be able to vote again for this content afterwards.")) return;
-  const { error } = await sb.from('votes').delete().eq('id', id);
-  if(error){ alert(error.message); return; }
-  allVotesCache = []; renderVotes(); loadOverview();
+function deleteVote(id){
+  askConfirm("The voter will be able to vote again for this content afterwards.", async ()=>{
+    const { error } = await sb.from('votes').delete().eq('id', id);
+    if(error){ alert(error.message); return; }
+    allVotesCache = []; renderVotes(); loadOverview();
+  }, "Delete this vote?");
 }
 
 /* ---------------- Init: resume session if already logged in as admin ---------------- */
