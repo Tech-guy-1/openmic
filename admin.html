@@ -503,7 +503,7 @@ async function renderPosts(){
       <td>${p.title}</td>
       <td onclick="event.stopPropagation()">${p.profiles ? p.profiles.full_name : ""}</td>
       <td>${p.category||""}</td>
-      <td><span class="badge badge-${p.status}">${p.status==='removed'?'rejected':p.status}</span>${p.status==='removed'?daysLeftLabel(p.rejected_at):''}</td>
+      <td><span class="badge badge-${p.status}">${p.status==='removed'?'rejected':p.status}</span>${p.appealed_at ? `<span class="badge" style="background:#FFF3D6;color:#8A6D00;margin-left:4px;">⚠ appeal pending</span>` : ''}${p.status==='removed'?daysLeftLabel(p.rejected_at):''}</td>
       <td>${new Date(p.created_at).toLocaleDateString()}</td>
       <td class="row-actions" onclick="event.stopPropagation()">
         ${p.status!=='published' ? `<button class="btn btn-outline btn-sm" onclick="setPostStatus('${p.id}','published')">Publish</button>` : ``}
@@ -517,6 +517,12 @@ async function setPostStatus(id, status){
   if(error){ alert(error.message); return; }
   renderPosts(); loadOverview();
 }
+async function dismissAppeal(id){
+  const { error } = await sb.from('posts').update({ appeal_message: null, appealed_at: null, rejected_at: new Date().toISOString() }).eq('id', id);
+  if(error){ alert(error.message); return; }
+  renderPosts(); loadOverview();
+  closeDetailModal();
+}
 function mediaPreviewHtml(url){
   if(!url) return `<p class="muted">No media file uploaded for this piece.</p>`;
   const ext = url.split('.').pop().split('?')[0].toLowerCase();
@@ -528,6 +534,13 @@ function openPostDetail(id){
   const p = allPostsCache.find(x=>x.id===id);
   if(!p) return;
   const u = p.profiles || {};
+  const appealHtml = !p.appealed_at ? "" : `
+    <div class="detail-row" style="display:block;">
+      <span class="k">Appeal, submitted by the creator</span>
+      <p style="margin:6px 0 0;font-size:.88rem;">"${p.appeal_message||""}"</p>
+      <button class="btn btn-outline btn-sm" style="margin-top:8px;" onclick="dismissAppeal('${p.id}')">Dismiss appeal (restarts the 7-day countdown)</button>
+    </div>
+  `;
   document.getElementById("detail-modal-content").innerHTML = `
     <button class="modal-close" onclick="closeDetailModal()">&times;</button>
     <h2>${p.title}</h2>
@@ -536,6 +549,7 @@ function openPostDetail(id){
     ${mediaPreviewHtml(p.media_url)}
     <div class="detail-row"><span class="k">Category</span><span class="v">${p.category||"—"}</span></div>
     <div class="detail-row"><span class="k">Submitted</span><span class="v">${new Date(p.created_at).toLocaleString()}</span></div>
+    ${appealHtml}
     <h3 style="margin-top:18px;font-size:.95rem;">Uploaded by</h3>
     <div class="detail-header">${avatarHtml(u)}<div><strong>${u.full_name||"Unknown"}</strong><br><span class="muted" style="font-size:.82rem;">${u.email||""}</span></div></div>
     <div class="detail-row"><span class="k">Phone</span><span class="v">${u.phone||"—"}</span></div>
