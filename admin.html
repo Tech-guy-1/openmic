@@ -253,6 +253,9 @@ tr.clickable:hover{ background:var(--paper-2); }
 <script src="assets/supabase-client.js"></script>
 <script>
 const CATEGORIES = ["Singing","Poetry & Spoken Word","Comedy","Dance","Acting","Instrumentalists","Visual Art","Photography","Filmmaking","Writing","Fashion","DJs & Producers"];
+const UNIVERSITIES = ["University of Malawi","Malawi University of Science and Technology","Mzuzu University","Lilongwe University of Agriculture and Natural Resources","Catholic University of Malawi","Malawi Assemblies of God University","University of Livingstonia","DMI-St. Eugene University","Skyway University","African Bible College","Blantyre International University","Malawi Adventist University"];
+const YEAR_OPTIONS = ["1st year","2nd year","3rd year","4th year","5th year","Postgraduate","Alumni"];
+const INDUSTRIES = ["Events & Entertainment","Media & Advertising","Telecom","Retail & FMCG","Banking & Finance","NGO / Development","Education","Hospitality & Tourism","Fashion & Beauty","Other"];
 let adminProfile = null;
 
 function initials(name){ return (name||"?").split(" ").map(p=>p[0]).slice(0,2).join("").toUpperCase(); }
@@ -458,6 +461,10 @@ async function deleteUser(id){
 function openUserDetail(id){
   const u = allUsersCache.find(x=>x.id===id);
   if(!u) return;
+  renderUserDetailView(u);
+  document.getElementById("detail-modal-overlay").style.display = "flex";
+}
+function renderUserDetailView(u){
   const typeLabel = { user:"Creator", organizer:"Brand", admin:"Admin" };
   const roleSpecific = u.role === 'organizer' ? `
     <div class="detail-row"><span class="k">Brand name</span><span class="v">${u.brand_name||"—"}</span></div>
@@ -477,8 +484,66 @@ function openUserDetail(id){
     ${roleSpecific}
     <div class="detail-row"><span class="k">Bio</span><span class="v">${u.bio||"—"}</span></div>
     <div class="detail-row"><span class="k">Joined</span><span class="v">${new Date(u.created_at).toLocaleString()}</span></div>
+    ${u.role !== 'admin' ? `<button class="btn btn-outline btn-sm" style="margin-top:14px;" onclick="renderUserDetailEditForm('${u.id}')">Edit details</button>` : `<p class="muted" style="font-size:.82rem;margin-top:14px;">Admin accounts are managed directly in the Supabase table editor.</p>`}
   `;
-  document.getElementById("detail-modal-overlay").style.display = "flex";
+}
+function renderUserDetailEditForm(id){
+  const u = allUsersCache.find(x=>x.id===id);
+  if(!u) return;
+  const roleSpecific = u.role === 'organizer' ? `
+    <div class="form-row"><label>Brand name</label><input type="text" id="ue-brand-name" value="${u.brand_name||''}"></div>
+    <div class="form-row"><label>Industry</label>
+      <select id="ue-industry">${INDUSTRIES.map(i=>`<option ${i===u.industry?'selected':''}>${i}</option>`).join("")}</select>
+    </div>
+    <div class="form-row"><label>Business email</label><input type="email" id="ue-business-email" value="${u.business_email||''}"></div>
+  ` : `
+    <div class="form-row"><label>University</label>
+      <select id="ue-university">${UNIVERSITIES.map(uni=>`<option ${uni===u.university?'selected':''}>${uni}</option>`).join("")}</select>
+    </div>
+    <div class="form-row"><label>Year of study</label>
+      <select id="ue-year">${YEAR_OPTIONS.map(y=>`<option ${y===u.year_of_study?'selected':''}>${y}</option>`).join("")}</select>
+    </div>
+  `;
+  document.getElementById("detail-modal-content").innerHTML = `
+    <button class="modal-close" onclick="closeDetailModal()">&times;</button>
+    <h2 style="margin-bottom:14px;">Edit ${u.full_name}'s details</h2>
+    <div id="user-edit-error"></div>
+    <p class="muted" style="font-size:.82rem;margin-bottom:14px;">These fields are locked from the user's own side once set; only an admin can change them here.</p>
+    <div class="form-row"><label>Full name</label><input type="text" id="ue-name" value="${u.full_name||''}"></div>
+    <div class="form-row"><label>Phone</label><input type="tel" id="ue-phone" value="${u.phone||''}"></div>
+    <div class="form-row"><label>City</label><input type="text" id="ue-city" value="${u.city||''}"></div>
+    ${roleSpecific}
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button class="btn btn-primary" onclick="saveUserDetails('${u.id}')">Save changes</button>
+      <button class="btn btn-outline" onclick="renderUserDetailView(allUsersCache.find(x=>x.id==='${u.id}'))">Cancel</button>
+    </div>
+  `;
+}
+async function saveUserDetails(id){
+  const u = allUsersCache.find(x=>x.id===id);
+  if(!u) return;
+  const errEl = document.getElementById("user-edit-error");
+  const updates = {
+    full_name: document.getElementById("ue-name").value.trim(),
+    phone: document.getElementById("ue-phone").value.trim(),
+    city: document.getElementById("ue-city").value.trim()
+  };
+  if(u.role === 'organizer'){
+    updates.brand_name = document.getElementById("ue-brand-name").value.trim();
+    updates.industry = document.getElementById("ue-industry").value;
+    updates.business_email = document.getElementById("ue-business-email").value.trim();
+  } else {
+    updates.university = document.getElementById("ue-university").value;
+    updates.year_of_study = document.getElementById("ue-year").value;
+  }
+  const { error } = await sb.from('profiles').update(updates).eq('id', id);
+  if(error){ errEl.innerHTML = `<div class="form-error">${error.message}</div>`; return; }
+  allUsersCache = [];
+  const { data } = await sb.from('profiles').select('*').order('created_at',{ascending:false});
+  allUsersCache = data || [];
+  renderUsers();
+  const updated = allUsersCache.find(x=>x.id===id);
+  if(updated) renderUserDetailView(updated);
 }
 
 /* ---------------- Posts ---------------- */

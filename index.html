@@ -118,6 +118,18 @@ a.tag:hover, button.tag:hover{ border-color:var(--ink); }
 .content-actions .vote-count{ font-size:.78rem; }
 .vote-btn-sm{ display:inline-flex; align-items:center; gap:4px; padding:4px 9px; border-radius:var(--radius-sm); border:1.5px solid var(--ink); background:var(--ink); color:var(--white); font-weight:600; font-size:.72rem; cursor:pointer; }
 .vote-btn-sm:hover{ background:var(--coral); border-color:var(--coral); }
+.link-btn-sm{ display:inline-flex; align-items:center; gap:4px; padding:4px 9px; border-radius:var(--radius-sm); border:1.5px solid var(--line); background:var(--white); color:var(--ink); font-weight:600; font-size:.72rem; cursor:pointer; }
+.link-btn-sm:hover{ border-color:var(--ink); }
+
+.post-detail-card{ background:var(--white); border:1px solid var(--line); border-radius:var(--radius-md); overflow:hidden; max-width:640px; margin:0 auto; }
+.post-detail-media{ width:100%; aspect-ratio:4/3; background:var(--ink); display:flex; align-items:center; justify-content:center; overflow:hidden; }
+.post-detail-media img, .post-detail-media video{ width:100%; height:100%; object-fit:cover; display:block; }
+.post-detail-body{ padding:22px; }
+.post-detail-share{ display:flex; align-items:center; gap:8px; background:var(--paper-2); border-radius:var(--radius-sm); padding:9px 11px; margin:14px 0; }
+.post-detail-share input{ flex:1; border:none; background:none; font-size:.82rem; color:var(--ink-soft); }
+.post-detail-share input:focus{ outline:none; }
+.locked-field{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:9px 11px; border:1.5px solid var(--line); border-radius:var(--radius-sm); background:var(--paper-2); font-size:.9rem; color:var(--ink-soft); }
+.locked-field .lock-icon{ font-size:.8rem; flex-shrink:0; }
 
 .profile-tags{ display:flex; flex-wrap:wrap; gap:8px; }
 .muted{ color:var(--ink-soft); }
@@ -280,12 +292,12 @@ select:focus, input:focus{ border-color:var(--ink); }
 
 <header class="site-header">
   <div class="container nav-row">
-    <div class="brand" onclick="navigate('home')" role="button" tabindex="0" onkeydown="if(event.key==='Enter')navigate('home')" aria-label="OpenMic home">
+    <div class="brand" onclick="navigate(currentUser?'dashboard':'home')" role="button" tabindex="0" onkeydown="if(event.key==='Enter')navigate(currentUser?'dashboard':'home')" aria-label="OpenMic home">
       <img class="brand-logo" src="assets/logo.png" alt="Brand logo" onerror="this.style.display='none'">
     </div>
     <nav class="main-nav" aria-label="Main" id="main-nav">
       <a data-view="dashboard" id="nav-dashboard-link" onclick="navigate('dashboard');closeMobileMenu();" style="display:none;">Dashboard</a>
-      <a data-view="home" onclick="navigate('home');closeMobileMenu();">Home</a>
+      <a data-view="home" id="nav-home-link" onclick="navigate('home');closeMobileMenu();">Home</a>
       <a data-view="discover" onclick="navigate('discover');closeMobileMenu();">Discover</a>
       <a data-view="competitions" onclick="navigate('competitions');closeMobileMenu();">Competitions</a>
       <a data-view="leaderboard" onclick="navigate('leaderboard');closeMobileMenu();">Leaderboard</a>
@@ -435,6 +447,14 @@ select:focus, input:focus{ border-color:var(--ink); }
       <div class="inline-panel" id="opportunity-form-panel" style="display:none;"></div>
       <div class="opp-list" id="opportunities-list"><div class="spinner-text">Loading…</div></div>
     </div>
+  </section>
+</div>
+
+<!-- ===================== SINGLE PIECE OF CONTENT (shareable link, votable by anyone) ===================== -->
+<div class="view" id="view-post">
+  <div class="page-header"><div class="container"><h1>This piece of content</h1><p>Vote for it, or share the link below so others can vote too.</p></div></div>
+  <section>
+    <div class="container" id="post-detail-container" aria-live="polite"><div class="spinner-text">Loading…</div></div>
   </section>
 </div>
 
@@ -700,6 +720,7 @@ fillSelect("cp-industry", INDUSTRIES);
    Session state
    ============================================================ */
 let currentUser = null;   // {profileId, authId, name, email, role, isCreator, avatarUrl, brandName, profileComplete}
+let currentPostId = null; // the post shown on the shareable single-piece view
 let discoverState = { category:"all", sort:"votes", search:"", page:1 };
 const PAGE_SIZE = 12;
 
@@ -913,6 +934,7 @@ sb.auth.onAuthStateChange(async (event, _session)=>{
   await loadCurrentUser();
   renderAuthActions();
   maybeShowCompleteProfile();
+  if(currentPostId) return; // stay on the shared content link, don't bounce to dashboard/home
   if(event === 'SIGNED_IN' && currentUser){ navigate('dashboard'); return; }
   if(event === 'SIGNED_OUT'){ navigate('home'); return; }
   refreshActiveView();
@@ -921,8 +943,12 @@ sb.auth.onAuthStateChange(async (event, _session)=>{
 function renderAuthActions(){
   const el = document.getElementById("auth-actions");
   const dashLink = document.getElementById("nav-dashboard-link");
+  const homeLink = document.getElementById("nav-home-link");
+  const footer = document.querySelector(".site-footer");
   if(currentUser){
     dashLink.style.display = "";
+    if(homeLink) homeLink.style.display = "none";
+    if(footer) footer.style.display = "none";
     const avatar = currentUser.avatarUrl ? `<img src="${currentUser.avatarUrl}" alt="">` : initials(currentUser.name);
     el.innerHTML = `
       <div class="user-chip" onclick="navigate('profile')" style="cursor:pointer;" role="button" tabindex="0" onkeydown="if(event.key==='Enter')navigate('profile')" aria-label="Your profile, ${currentUser.name}">
@@ -933,6 +959,8 @@ function renderAuthActions(){
     `;
   } else {
     dashLink.style.display = "none";
+    if(homeLink) homeLink.style.display = "";
+    if(footer) footer.style.display = "";
     el.innerHTML = `
       <button class="btn btn-ghost btn-sm" onclick="navigate('login')" style="color:#fff;border-color:var(--line-on-ink);">Log in</button>
       <button class="btn btn-gold btn-sm" style="background:var(--gold);color:var(--gold-ink);" onclick="navigate('signup')">Sign up</button>
@@ -1074,6 +1102,8 @@ async function submitCompleteProfile(){
 
 /* ---------------- Navigation ---------------- */
 function navigate(viewName){
+  // Logged-in users get the app dashboard, not the public marketing homepage.
+  if(viewName === "home" && currentUser){ viewName = "dashboard"; }
   document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
   const target = document.getElementById("view-"+viewName);
   if(target) target.classList.add("active");
@@ -1081,6 +1111,10 @@ function navigate(viewName){
     a.classList.toggle("active", a.dataset.view === viewName);
   });
   window.scrollTo({top:0,behavior:"instant"});
+  if(viewName !== "post"){
+    currentPostId = null;
+    if(window.location.search.includes("post=")) history.replaceState(null, "", window.location.pathname);
+  }
   renderForView(viewName);
 }
 function refreshActiveView(){
@@ -1096,6 +1130,7 @@ function renderForView(viewName){
   if(viewName==="upload") renderUpload();
   if(viewName==="profile") renderProfile();
   if(viewName==="dashboard") renderDashboard();
+  if(viewName==="post") renderPostDetail();
 }
 
 /* ---------------- Data access ---------------- */
@@ -1122,6 +1157,73 @@ async function fetchOpenOpportunities(){
   if(error) console.error(error);
   return data || [];
 }
+async function fetchPostById(postId){
+  const { data, error } = await sb.from('public_post_feed').select('*').eq('post_id', postId).maybeSingle();
+  if(error) console.error(error);
+  return data || null;
+}
+
+/* ---------------- Single piece of content (shareable, votable link) ---------------- */
+function postShareUrl(postId){
+  return `${window.location.origin}${window.location.pathname}?post=${postId}`;
+}
+function viewPost(postId){
+  currentPostId = postId;
+  history.pushState(null, "", postShareUrl(postId));
+  navigate("post");
+}
+async function copyPostLink(postId, btnEl){
+  const url = postShareUrl(postId);
+  const restoreLabel = btnEl ? btnEl.innerHTML : null;
+  try{
+    await navigator.clipboard.writeText(url);
+  }catch(_e){
+    window.prompt("Copy this link:", url);
+  }
+  if(btnEl){
+    btnEl.innerHTML = "✓ Copied";
+    setTimeout(()=>{ btnEl.innerHTML = restoreLabel; }, 1800);
+  }
+}
+async function renderPostDetail(){
+  const el = document.getElementById("post-detail-container");
+  if(!currentPostId){ el.innerHTML = `<div class="empty-state">No content selected.</div>`; return; }
+  el.innerHTML = `<p class="spinner-text">Loading…</p>`;
+  const p = await fetchPostById(currentPostId);
+  if(!p){
+    el.innerHTML = `<div class="upload-card" style="max-width:520px;margin:0 auto;">
+      <h3>This piece isn't available</h3>
+      <p class="muted">It may have been removed, or is still pending review.</p>
+      <a class="btn btn-outline" onclick="navigate('discover')">Browse other creators</a>
+    </div>`;
+    return;
+  }
+  const isVideo = /\.(mp4|webm|mov|m4v)(\?.*)?$/i.test(p.media_url||"");
+  const mediaHtml = p.media_url
+    ? (isVideo ? `<video src="${p.media_url}" controls playsinline></video>` : `<img src="${p.media_url}" alt="${p.title}">`)
+    : `<span style="color:var(--white);font-family:var(--font-display);font-size:2rem;">${initials(p.full_name)}</span>`;
+  const shareUrl = postShareUrl(p.post_id);
+  el.innerHTML = `
+    <div class="post-detail-card">
+      <div class="post-detail-media">${mediaHtml}</div>
+      <div class="post-detail-body">
+        <span class="stub-cat" style="position:static;display:inline-block;background:${CATEGORY_COLORS[p.category]||'#57517E'};color:var(--gold);margin-bottom:10px;">${p.category||""}</span>
+        <h2 style="margin-bottom:4px;">${p.title}</h2>
+        <div class="muted" style="margin-bottom:14px;">by ${p.full_name}${p.university? ' · '+p.university:''}${p.city? ' · '+p.city:''}</div>
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;">
+          <span class="vote-count" style="font-size:1rem;"><span class="n">${p.votes}</span> votes</span>
+          <button class="btn btn-primary btn-sm" onclick="openVoteModal('${p.post_id}','${p.title.replace(/'/g,"\\'")}')">▲ Vote for this</button>
+        </div>
+        <div class="post-detail-share">
+          <input type="text" readonly value="${shareUrl}" onclick="this.select()" aria-label="Shareable link to this piece">
+          <button class="link-btn-sm" onclick="copyPostLink('${p.post_id}', this)">🔗 Copy link</button>
+        </div>
+        <p class="muted" style="font-size:.82rem;">Share this link, anyone who opens it can view this piece and vote, they don't need an account.</p>
+        <a class="btn btn-ghost btn-sm" style="margin-top:10px;" onclick="navigate('discover')">← Browse more creators</a>
+      </div>
+    </div>
+  `;
+}
 
 /* ---------------- Cards ---------------- */
 function stubCard(creator){
@@ -1129,10 +1231,11 @@ function stubCard(creator){
   const color = CATEGORY_COLORS[firstCat] || "#57517E";
   const postsHtml = creator.posts.map(p=>`
     <div class="content-row">
-      <span class="content-title">${p.title}</span>
+      <span class="content-title" style="cursor:pointer;" onclick="viewPost('${p.post_id}')">${p.title}</span>
       <span class="content-actions">
         <span class="vote-count"><span class="n">${p.votes}</span></span>
-        <button class="vote-btn-sm" onclick="openVoteModal('${p.post_id}','${p.title.replace(/'/g,"\\'")}')">▲ Vote</button>
+        <button class="link-btn-sm" onclick="event.stopPropagation();copyPostLink('${p.post_id}', this)" title="Copy shareable link" aria-label="Copy link to ${p.title.replace(/"/g,'&quot;')}">🔗</button>
+        <button class="vote-btn-sm" onclick="event.stopPropagation();openVoteModal('${p.post_id}','${p.title.replace(/'/g,"\\'")}')">▲ Vote</button>
       </span>
     </div>
   `).join("");
@@ -1402,19 +1505,14 @@ function renderProfile(){
     return;
   }
   const avatar = currentUser.avatarUrl ? `<img src="${currentUser.avatarUrl}" alt="">` : initials(currentUser.name);
+  const locked = (label, value) => `<div class="form-row"><label>${label}</label><div class="locked-field"><span>${value||'—'}</span><span class="lock-icon" title="Set at signup, only an admin can change this">🔒</span></div></div>`;
   const roleFields = currentUser.role === 'organizer' ? `
-    <div class="form-row"><label>Brand name</label><input type="text" id="pf-brand-name" value="${currentUser.brandName||''}"></div>
-    <div class="form-row"><label>Industry</label>
-      <select id="pf-industry">${INDUSTRIES.map(i=>`<option ${i===currentUser.industry?'selected':''}>${i}</option>`).join("")}</select>
-    </div>
-    <div class="form-row"><label>Business email</label><input type="email" id="pf-business-email" value="${currentUser.businessEmail||''}"></div>
+    ${locked('Brand name', currentUser.brandName)}
+    ${locked('Industry', currentUser.industry)}
+    ${locked('Business email', currentUser.businessEmail)}
   ` : `
-    <div class="form-row"><label>University</label>
-      <select id="pf-university">${UNIVERSITIES.map(u=>`<option ${u===currentUser.university?'selected':''}>${u}</option>`).join("")}</select>
-    </div>
-    <div class="form-row"><label>Year of study</label>
-      <select id="pf-year">${YEAR_OPTIONS.map(y=>`<option ${y===currentUser.yearOfStudy?'selected':''}>${y}</option>`).join("")}</select>
-    </div>
+    ${locked('University', currentUser.university)}
+    ${locked('Year of study', currentUser.yearOfStudy)}
   `;
   el.innerHTML = `<div class="upload-card">
     <div id="profile-error" role="alert" aria-live="assertive"></div>
@@ -1428,9 +1526,10 @@ function renderProfile(){
         <div class="muted" style="font-size:.78rem;margin-top:6px;">JPG or PNG works best.</div>
       </div>
     </div>
-    <div class="form-row"><label>Full name</label><input type="text" id="pf-name" value="${currentUser.name||''}"></div>
-    <div class="form-row"><label>Phone number</label><input type="tel" id="pf-phone" value="${currentUser.phone||''}"></div>
-    <div class="form-row"><label>City</label><input type="text" id="pf-city" value="${currentUser.city||''}"></div>
+    <p class="muted" style="font-size:.82rem;margin-bottom:14px;">🔒 The details below were set when you signed up. They're locked so your profile stays trustworthy, if any of it needs to change, contact an admin.</p>
+    ${locked('Full name', currentUser.name)}
+    ${locked('Phone number', currentUser.phone)}
+    ${locked('City', currentUser.city)}
     ${roleFields}
     <div class="form-row"><label>Bio</label><textarea id="pf-bio" rows="3" style="width:100%;font-family:inherit;padding:9px 11px;border:1.5px solid var(--line);border-radius:var(--radius-sm);">${currentUser.bio||''}</textarea></div>
     <button class="btn btn-primary btn-block" onclick="submitProfileEdit()">Save changes</button>
@@ -1457,19 +1556,8 @@ async function submitProfileEdit(){
   const errEl = document.getElementById("profile-error");
   errEl.innerHTML = "";
   const updates = {
-    full_name: document.getElementById("pf-name").value.trim(),
-    phone: normalizePhoneMW(document.getElementById("pf-phone").value.trim()) || currentUser.phone,
-    city: document.getElementById("pf-city").value.trim(),
     bio: document.getElementById("pf-bio").value.trim()
   };
-  if(currentUser.role === 'organizer'){
-    updates.brand_name = document.getElementById("pf-brand-name").value.trim();
-    updates.industry = document.getElementById("pf-industry").value;
-    updates.business_email = document.getElementById("pf-business-email").value.trim();
-  } else {
-    updates.university = document.getElementById("pf-university").value;
-    updates.year_of_study = document.getElementById("pf-year").value;
-  }
   const { error } = await sb.from('profiles').update(updates).eq('id', currentUser.profileId);
   if(error){ errEl.innerHTML = `<div class="form-error">${error.message}</div>`; return; }
   await loadCurrentUser();
@@ -1494,6 +1582,7 @@ async function renderDashboard(){
   } else {
     await renderCreatorDashboard(el);
   }
+  el.insertAdjacentHTML("beforeend", `<div style="text-align:center;margin-top:28px;"><button class="link-btn" onclick="navigate('contact')">Need help? Contact us</button></div>`);
 }
 
 async function renderCreatorDashboard(el){
@@ -1532,6 +1621,7 @@ async function renderCreatorDashboard(el){
         <div style="display:flex;align-items:center;gap:10px;">
           <span class="status-pill status-${p.status}">${p.status==='removed'?'rejected':p.status}</span>
           <span class="vote-count"><span class="n">${voteMap[p.id]||0}</span> votes</span>
+          ${p.status==='published' ? `<button class="link-btn-sm" onclick="copyPostLink('${p.id}', this)" title="Copy shareable link">🔗 Copy link</button>` : ``}
         </div>
       </div>
       ${appealBlock}
@@ -1700,9 +1790,21 @@ async function confirmVote(){
   await loadCurrentUser();
   renderAuthActions();
   maybeShowCompleteProfile();
-  if(currentUser){ navigate('dashboard'); }
-  else { renderHome(); }
+  const sharedPostId = new URLSearchParams(window.location.search).get('post');
+  if(sharedPostId){
+    currentPostId = sharedPostId;
+    navigate('post');
+  } else if(currentUser){
+    navigate('dashboard');
+  } else {
+    renderHome();
+  }
 })();
+window.addEventListener('popstate', ()=>{
+  const sharedPostId = new URLSearchParams(window.location.search).get('post');
+  if(sharedPostId){ currentPostId = sharedPostId; navigate('post'); }
+  else { navigate(currentUser ? 'dashboard' : 'home'); }
+});
 </script>
 </body>
 </html>
