@@ -442,7 +442,7 @@ select:focus, input:focus{ border-color:var(--ink); }
     <div class="container">
       <div class="section-head">
         <div></div>
-        <a class="btn btn-outline" onclick="togglePostOpportunityForm()">Post an opportunity</a>
+        <a class="btn btn-outline" id="post-opp-btn" onclick="togglePostOpportunityForm()" style="display:none;">Post an opportunity</a>
       </div>
       <div class="inline-panel" id="opportunity-form-panel" style="display:none;"></div>
       <div class="opp-list" id="opportunities-list"><div class="spinner-text">Loading…</div></div>
@@ -455,6 +455,14 @@ select:focus, input:focus{ border-color:var(--ink); }
   <div class="page-header"><div class="container"><h1>This piece of content</h1><p>Vote for it, or share the link below so others can vote too.</p></div></div>
   <section>
     <div class="container" id="post-detail-container" aria-live="polite"><div class="spinner-text">Loading…</div></div>
+  </section>
+</div>
+
+<!-- ===================== CREATOR PUBLIC PROFILE (viewable without an account) ===================== -->
+<div class="view" id="view-creator">
+  <div class="page-header"><div class="container"><h1>Creator profile</h1><p>What they've shared, and how it's voting.</p></div></div>
+  <section>
+    <div class="container" id="creator-profile-container" aria-live="polite"><div class="spinner-text">Loading…</div></div>
   </section>
 </div>
 
@@ -721,6 +729,7 @@ fillSelect("cp-industry", INDUSTRIES);
    ============================================================ */
 let currentUser = null;   // {profileId, authId, name, email, role, isCreator, avatarUrl, brandName, profileComplete}
 let currentPostId = null; // the post shown on the shareable single-piece view
+let currentCreatorId = null; // the creator profile_id shown on the public creator profile view
 let discoverState = { category:"all", sort:"votes", search:"", page:1 };
 const PAGE_SIZE = 12;
 
@@ -925,7 +934,7 @@ async function loadCurrentUser(){
     avatarUrl: profile.avatar_url, brandName: profile.brand_name,
     phone: profile.phone, city: profile.city, university: profile.university,
     yearOfStudy: profile.year_of_study, bio: profile.bio, industry: profile.industry,
-    businessEmail: profile.business_email,
+    businessEmail: profile.business_email, category: profile.category,
     profileComplete: profile.profile_complete
   };
 }
@@ -934,7 +943,7 @@ sb.auth.onAuthStateChange(async (event, _session)=>{
   await loadCurrentUser();
   renderAuthActions();
   maybeShowCompleteProfile();
-  if(currentPostId) return; // stay on the shared content link, don't bounce to dashboard/home
+  if(currentPostId || currentCreatorId) return; // stay on the shared link, don't bounce to dashboard/home
   if(event === 'SIGNED_IN' && currentUser){ navigate('dashboard'); return; }
   if(event === 'SIGNED_OUT'){ navigate('home'); return; }
   refreshActiveView();
@@ -1115,6 +1124,10 @@ function navigate(viewName){
     currentPostId = null;
     if(window.location.search.includes("post=")) history.replaceState(null, "", window.location.pathname);
   }
+  if(viewName !== "creator"){
+    currentCreatorId = null;
+    if(window.location.search.includes("creator=")) history.replaceState(null, "", window.location.pathname);
+  }
   renderForView(viewName);
 }
 function refreshActiveView(){
@@ -1131,6 +1144,7 @@ function renderForView(viewName){
   if(viewName==="profile") renderProfile();
   if(viewName==="dashboard") renderDashboard();
   if(viewName==="post") renderPostDetail();
+  if(viewName==="creator") renderCreatorProfilePage();
 }
 
 /* ---------------- Data access ---------------- */
@@ -1203,16 +1217,20 @@ async function renderPostDetail(){
     ? (isVideo ? `<video src="${p.media_url}" controls playsinline></video>` : `<img src="${p.media_url}" alt="${p.title}">`)
     : `<span style="color:var(--white);font-family:var(--font-display);font-size:2rem;">${initials(p.full_name)}</span>`;
   const shareUrl = postShareUrl(p.post_id);
+  const isOwn = currentUser && p.profile_id === currentUser.profileId;
+  const voteBlock = isOwn
+    ? `<span class="muted" style="font-size:.85rem;">This is your own content, creators can't vote for their own pieces.</span>`
+    : `<button class="btn btn-primary btn-sm" onclick="openVoteModal('${p.post_id}','${p.title.replace(/'/g,"\\'")}')">▲ Vote for this</button>`;
   el.innerHTML = `
     <div class="post-detail-card">
       <div class="post-detail-media">${mediaHtml}</div>
       <div class="post-detail-body">
         <span class="stub-cat" style="position:static;display:inline-block;background:${CATEGORY_COLORS[p.category]||'#57517E'};color:var(--gold);margin-bottom:10px;">${p.category||""}</span>
         <h2 style="margin-bottom:4px;">${p.title}</h2>
-        <div class="muted" style="margin-bottom:14px;">by ${p.full_name}${p.university? ' · '+p.university:''}${p.city? ' · '+p.city:''}</div>
-        <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;">
+        <div class="muted" style="margin-bottom:14px;">by <a onclick="viewCreatorProfile('${p.profile_id}')" style="cursor:pointer;text-decoration:underline;color:inherit;">${p.full_name}</a>${p.university? ' · '+p.university:''}${p.city? ' · '+p.city:''}</div>
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;flex-wrap:wrap;">
           <span class="vote-count" style="font-size:1rem;"><span class="n">${p.votes}</span> votes</span>
-          <button class="btn btn-primary btn-sm" onclick="openVoteModal('${p.post_id}','${p.title.replace(/'/g,"\\'")}')">▲ Vote for this</button>
+          ${voteBlock}
         </div>
         <div class="post-detail-share">
           <input type="text" readonly value="${shareUrl}" onclick="this.select()" aria-label="Shareable link to this piece">
@@ -1225,24 +1243,88 @@ async function renderPostDetail(){
   `;
 }
 
+/* ---------------- Creator public profile (viewable without an account) ---------------- */
+function viewCreatorProfile(profileId){
+  currentCreatorId = profileId;
+  history.pushState(null, "", `${window.location.origin}${window.location.pathname}?creator=${profileId}`);
+  navigate("creator");
+}
+async function renderCreatorProfilePage(){
+  const el = document.getElementById("creator-profile-container");
+  if(!currentCreatorId){ el.innerHTML = `<div class="empty-state">No creator selected.</div>`; return; }
+  el.innerHTML = `<p class="spinner-text">Loading…</p>`;
+  const { data, error } = await sb.from('public_post_feed').select('*').eq('profile_id', currentCreatorId).order('posted_at', {ascending:false});
+  if(error) console.error(error);
+  const posts = data || [];
+  if(!posts.length){
+    el.innerHTML = `<div class="upload-card" style="max-width:520px;margin:0 auto;">
+      <h3>Nothing to show yet</h3>
+      <p class="muted">This creator doesn't have any published content right now.</p>
+      <a class="btn btn-outline" onclick="navigate('discover')">Browse other creators</a>
+    </div>`;
+    return;
+  }
+  const c = posts[0];
+  const avatar = c.avatar_url ? `<img src="${c.avatar_url}" alt="">` : initials(c.full_name);
+  const totalVotes = posts.reduce((sum,p)=>sum+p.votes,0);
+  const orderedPosts = [...posts].sort((a,b)=> b.votes - a.votes || new Date(b.posted_at) - new Date(a.posted_at));
+  const isOwnPage = currentUser && currentUser.profileId === currentCreatorId;
+  const postsHtml = orderedPosts.map(p=>{
+    const isOwn = currentUser && p.profile_id === currentUser.profileId;
+    return `
+    <div class="content-row">
+      <span class="content-title" style="cursor:pointer;" onclick="viewPost('${p.post_id}')">${p.title}</span>
+      <span class="content-actions">
+        <span class="vote-count"><span class="n">${p.votes}</span></span>
+        <button class="link-btn-sm" onclick="copyPostLink('${p.post_id}', this)" title="Copy shareable link">🔗</button>
+        ${isOwn
+          ? `<span class="muted" style="font-size:.72rem;">Your content</span>`
+          : `<button class="vote-btn-sm" onclick="openVoteModal('${p.post_id}','${p.title.replace(/'/g,"\\'")}')">▲ Vote</button>`}
+      </span>
+    </div>
+  `;}).join("");
+  el.innerHTML = `
+    <div class="upload-card" style="max-width:640px;margin:0 auto;">
+      ${isOwnPage ? `<p class="muted" style="font-size:.8rem;margin-bottom:14px;">This is a preview of your public profile, what other people see when they click your name.</p>` : ``}
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;">
+        <span class="avatar" style="width:64px;height:64px;font-size:1.4rem;border-radius:50%;background:var(--gold);color:var(--gold-ink);display:flex;align-items:center;justify-content:center;overflow:hidden;">${avatar}</span>
+        <div>
+          <h2 style="margin-bottom:2px;">${c.full_name}</h2>
+          <div class="muted" style="font-size:.85rem;">${c.university||""}${c.city? ' · '+c.city:''}</div>
+        </div>
+      </div>
+      ${c.bio ? `<p style="margin-bottom:16px;">${c.bio}</p>` : ``}
+      <div class="stub-foot" style="border:none;padding:0 0 14px;"><span class="vote-count">Total <span class="n">${totalVotes}</span> votes across ${posts.length} piece${posts.length!==1?'s':''}</span></div>
+      <h3 class="dash-section-title" style="margin-bottom:8px;">Their content</h3>
+      <div class="content-list">${postsHtml}</div>
+      <a class="btn btn-ghost btn-sm" style="margin-top:16px;" onclick="navigate('discover')">← Browse more creators</a>
+    </div>
+  `;
+}
+
 /* ---------------- Cards ---------------- */
 function stubCard(creator){
   const firstCat = creator.posts[0]?.category;
   const color = CATEGORY_COLORS[firstCat] || "#57517E";
-  const postsHtml = creator.posts.map(p=>`
+  const orderedPosts = [...creator.posts].sort((a,b)=> b.votes - a.votes || new Date(b.posted_at) - new Date(a.posted_at));
+  const postsHtml = orderedPosts.map(p=>{
+    const isOwn = currentUser && p.profile_id === currentUser.profileId;
+    return `
     <div class="content-row">
       <span class="content-title" style="cursor:pointer;" onclick="viewPost('${p.post_id}')">${p.title}</span>
       <span class="content-actions">
         <span class="vote-count"><span class="n">${p.votes}</span></span>
         <button class="link-btn-sm" onclick="event.stopPropagation();copyPostLink('${p.post_id}', this)" title="Copy shareable link" aria-label="Copy link to ${p.title.replace(/"/g,'&quot;')}">🔗</button>
-        <button class="vote-btn-sm" onclick="event.stopPropagation();openVoteModal('${p.post_id}','${p.title.replace(/'/g,"\\'")}')">▲ Vote</button>
+        ${isOwn
+          ? `<span class="muted" style="font-size:.72rem;" title="Creators can't vote for their own content">Your content</span>`
+          : `<button class="vote-btn-sm" onclick="event.stopPropagation();openVoteModal('${p.post_id}','${p.title.replace(/'/g,"\\'")}')">▲ Vote</button>`}
       </span>
     </div>
-  `).join("");
+  `;}).join("");
   return `<div class="stub">
-    <div class="stub-media" style="background:${color}"><span class="stub-cat">${firstCat||"—"}</span>${initials(creator.full_name)}</div>
+    <div class="stub-media" style="background:${color};cursor:pointer;" onclick="viewCreatorProfile('${creator.profile_id}')"><span class="stub-cat">${firstCat||"—"}</span>${initials(creator.full_name)}</div>
     <div class="stub-body">
-      <div class="stub-name">${creator.full_name}</div>
+      <div class="stub-name" style="cursor:pointer;" onclick="viewCreatorProfile('${creator.profile_id}')">${creator.full_name}</div>
       <div class="stub-uni">${creator.university||""}${creator.city? ' · '+creator.city:''}</div>
       <p style="font-size:.85rem;">${creator.bio||""}</p>
       <div class="content-list">${postsHtml}</div>
@@ -1257,7 +1339,7 @@ async function renderHome(){
     `<span class="tag" onclick="goToCategory('${cat.replace(/'/g,"\\'")}')">${cat}</span>`).join("");
   renderFAQ();
   const posts = await fetchPostFeed();
-  const creators = groupByCreator(posts).sort((a,b)=>b.totalVotes-a.totalVotes).slice(0,12);
+  const creators = groupByCreator(posts).sort((a,b)=>b.totalVotes-a.totalVotes || new Date(b.created_at)-new Date(a.created_at)).slice(0,12);
   document.getElementById("trending-grid").innerHTML = creators.length
     ? creators.map(stubCard).join("")
     : `<div class="empty-state">No creators yet. Be the first to showcase your talent.</div>`;
@@ -1304,7 +1386,7 @@ async function renderDiscover(){
   if(discoverState.category!=="all"){
     creators = creators.map(c=>({...c, posts:c.posts.filter(p=>p.category===discoverState.category)}));
   }
-  if(discoverState.sort==="votes") creators.sort((a,b)=>b.totalVotes-a.totalVotes);
+  if(discoverState.sort==="votes") creators.sort((a,b)=>b.totalVotes-a.totalVotes || new Date(b.created_at)-new Date(a.created_at));
   else if(discoverState.sort==="newest") creators.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
   else if(discoverState.sort==="name") creators.sort((a,b)=>a.full_name.localeCompare(b.full_name));
 
@@ -1333,27 +1415,42 @@ function changeDiscoverPage(delta){
 /* ---------------- Competitions ---------------- */
 async function renderCompetitions(){
   const posts = await fetchPostFeed();
-  const rounds = CATEGORIES.map((cat,i)=>{
-    const entrants = new Set(posts.filter(p=>p.category===cat).map(p=>p.profile_id)).size;
-    return {cat, entrants, closes: ["Mon","Wed","Fri"][i%3]+" this week"};
+  const isOwnCategoryOnly = currentUser && currentUser.role === 'user' && currentUser.category;
+  const cats = isOwnCategoryOnly ? [currentUser.category] : CATEGORIES;
+  const rounds = cats.map((cat)=>{
+    const i = CATEGORIES.indexOf(cat);
+    const entrantMap = new Map();
+    posts.filter(p=>p.category===cat).forEach(p=>{ if(!entrantMap.has(p.profile_id)) entrantMap.set(p.profile_id, p.full_name); });
+    const entrantNames = [...entrantMap.values()];
+    return {cat, entrantNames, closes: ["Mon","Wed","Fri"][i%3]+" this week"};
   });
-  document.getElementById("competitions-grid").innerHTML = rounds.map(r=>`
+  const noticeHtml = isOwnCategoryOnly
+    ? `<p class="muted" style="margin-bottom:16px;">You're shown ${currentUser.category}, since that's your creative category. Browse <a onclick="navigate('discover')" style="cursor:pointer;text-decoration:underline;">Discover</a> to see creators in other categories.</p>`
+    : "";
+  document.getElementById("competitions-grid").innerHTML = noticeHtml + rounds.map(r=>{
+    const shown = r.entrantNames.slice(0,6);
+    const more = r.entrantNames.length - shown.length;
+    const entrantsLine = r.entrantNames.length
+      ? `${shown.join(", ")}${more>0? ` +${more} more`:''}`
+      : "No entrants yet, be the first.";
+    return `
     <div class="stub">
       <div class="stub-media" style="background:${CATEGORY_COLORS[r.cat]}"><span class="stub-cat">Weekly round</span>${r.cat.split(" ")[0]}</div>
       <div class="stub-body">
         <div class="stub-name">${r.cat}: weekly round</div>
-        <div class="stub-uni">${r.entrants} entrants · closes ${r.closes}</div>
+        <div class="stub-uni">${r.entrantNames.length} entrant${r.entrantNames.length!==1?'s':''} · closes ${r.closes}</div>
         <p style="font-size:.85rem;">Top 3 voted pieces advance to the nationwide monthly showcase.</p>
+        <p class="muted" style="font-size:.8rem;"><strong>Entrants:</strong> ${entrantsLine}</p>
         <div class="stub-foot"><a class="btn btn-ghost btn-sm" onclick="goToCategory('${r.cat.replace(/'/g,"\\'")}')">View entries</a></div>
       </div>
     </div>
-  `).join("");
+  `;}).join("");
 }
 
 /* ---------------- Leaderboard ---------------- */
 async function renderLeaderboard(){
   const posts = await fetchPostFeed();
-  const ranked = groupByCreator(posts).sort((a,b)=>b.totalVotes-a.totalVotes);
+  const ranked = groupByCreator(posts).sort((a,b)=>b.totalVotes-a.totalVotes || new Date(b.created_at)-new Date(a.created_at));
   document.getElementById("leaderboard-body").innerHTML = ranked.length ? ranked.map((c,i)=>`
     <tr>
       <td class="lb-rank">#${i+1}</td>
@@ -1368,6 +1465,8 @@ async function renderLeaderboard(){
 
 /* ---------------- Opportunities ---------------- */
 async function renderOpportunities(){
+  const btn = document.getElementById("post-opp-btn");
+  btn.style.display = (currentUser && (currentUser.role === 'organizer' || currentUser.role === 'admin')) ? "" : "none";
   const opps = await fetchOpenOpportunities();
   document.getElementById("opportunities-list").innerHTML = opps.length ? opps.map(o=>`
     <div class="opp-card">
@@ -1394,6 +1493,7 @@ async function applyToOpportunity(oppId, title){
 }
 function togglePostOpportunityForm(){
   if(!currentUser){ navigate("login"); return; }
+  if(currentUser.role !== 'organizer'){ alert("Only brands can post opportunities. If you're hiring, sign up with a brand account."); return; }
   const panel = document.getElementById("opportunity-form-panel");
   if(panel.style.display === "block"){ panel.style.display = "none"; return; }
   panel.style.display = "block";
@@ -1773,6 +1873,8 @@ async function confirmVote(){
   if(error){
     if(error.message?.includes("DEVICE_DUPLICATE_VOTE") || error.message?.includes("votes_post_device_uniq")){
       errEl.innerHTML = `<div class="form-error">Vote fraud detected from this device. You cannot vote multiple times on this piece of content from the same device.</div>`;
+    } else if(error.message?.includes("SELF_VOTE_NOT_ALLOWED")){
+      errEl.innerHTML = `<div class="form-error">You can't vote for your own content.</div>`;
     } else if(error.message?.includes("DUPLICATE_VOTE") || error.code === '23505'){
       errEl.innerHTML = `<div class="form-error">You've already voted for this piece.</div>`;
     } else {
@@ -1790,10 +1892,15 @@ async function confirmVote(){
   await loadCurrentUser();
   renderAuthActions();
   maybeShowCompleteProfile();
-  const sharedPostId = new URLSearchParams(window.location.search).get('post');
+  const params = new URLSearchParams(window.location.search);
+  const sharedPostId = params.get('post');
+  const sharedCreatorId = params.get('creator');
   if(sharedPostId){
     currentPostId = sharedPostId;
     navigate('post');
+  } else if(sharedCreatorId){
+    currentCreatorId = sharedCreatorId;
+    navigate('creator');
   } else if(currentUser){
     navigate('dashboard');
   } else {
@@ -1801,8 +1908,11 @@ async function confirmVote(){
   }
 })();
 window.addEventListener('popstate', ()=>{
-  const sharedPostId = new URLSearchParams(window.location.search).get('post');
+  const params = new URLSearchParams(window.location.search);
+  const sharedPostId = params.get('post');
+  const sharedCreatorId = params.get('creator');
   if(sharedPostId){ currentPostId = sharedPostId; navigate('post'); }
+  else if(sharedCreatorId){ currentCreatorId = sharedCreatorId; navigate('creator'); }
   else { navigate(currentUser ? 'dashboard' : 'home'); }
 });
 </script>

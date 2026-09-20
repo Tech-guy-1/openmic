@@ -209,6 +209,10 @@ tr.clickable:hover{ background:var(--paper-2); }
 
     <div class="panel" id="panel-opportunities">
       <h1>Opportunities</h1>
+      <div class="toolbar" style="justify-content:flex-end;margin-bottom:14px;">
+        <button class="btn btn-primary btn-sm" onclick="toggleNewOpportunityForm()">+ New opportunity</button>
+      </div>
+      <div id="new-opportunity-panel" style="display:none;margin-bottom:18px;"></div>
       <table>
         <thead><tr><th>Title</th><th>Organization</th><th>Category</th><th>Status</th><th>Posted</th><th>Actions</th></tr></thead>
         <tbody id="opportunities-body"><tr><td colspan="6" class="empty-state">Loading…</td></tr></tbody>
@@ -627,6 +631,44 @@ function openPostDetail(id){
 
 /* ---------------- Opportunities ---------------- */
 let allOppsCache = [];
+function toggleNewOpportunityForm(){
+  const panel = document.getElementById("new-opportunity-panel");
+  if(panel.style.display === "block"){ panel.style.display = "none"; return; }
+  panel.style.display = "block";
+  panel.innerHTML = `
+    <div class="upload-card" style="max-width:520px;">
+      <h3>Post a new opportunity</h3>
+      <div id="new-opp-error"></div>
+      <div class="form-row"><label>Title</label><input type="text" id="no-title"></div>
+      <div class="form-row"><label>Organization name</label><input type="text" id="no-org"></div>
+      <div class="form-row"><label>Category</label>
+        <select id="no-category">${CATEGORIES.map(c=>`<option>${c}</option>`).join("")}</select>
+      </div>
+      <div class="form-row"><label>Location</label><input type="text" id="no-location" placeholder="e.g. Blantyre, or Remote"></div>
+      <div class="form-row"><label>Pay</label>
+        <select id="no-pay"><option>Paid</option><option>Unpaid</option><option>Stipend</option></select>
+      </div>
+      <button class="btn btn-primary" onclick="submitNewOpportunity()">Post opportunity</button>
+    </div>
+  `;
+}
+async function submitNewOpportunity(){
+  const errEl = document.getElementById("new-opp-error");
+  const title = document.getElementById("no-title").value.trim();
+  const org = document.getElementById("no-org").value.trim();
+  const location = document.getElementById("no-location").value.trim();
+  if(!title || !org || !location){ errEl.innerHTML = `<div class="form-error">Fill in title, organization, and location.</div>`; return; }
+  const payload = {
+    title, org_name: org,
+    category: document.getElementById("no-category").value,
+    location, pay: document.getElementById("no-pay").value,
+    posted_by: adminProfile.id, status: 'open'
+  };
+  const { error } = await sb.from('opportunities').insert(payload);
+  if(error){ errEl.innerHTML = `<div class="form-error">${error.message}</div>`; return; }
+  document.getElementById("new-opportunity-panel").style.display = "none";
+  renderOpportunities(); loadOverview();
+}
 async function renderOpportunities(){
   const { data, error } = await sb.from('opportunities').select('*').order('created_at',{ascending:false});
   if(error){ document.getElementById("opportunities-body").innerHTML = `<tr><td colspan="6" class="empty-state">${error.message}</td></tr>`; return; }
